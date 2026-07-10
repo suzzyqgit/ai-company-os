@@ -66,6 +66,14 @@ function buildQueryString({
   return params.toString();
 }
 
+function buildDailyMetricsExportHref(date: string) {
+  const params = new URLSearchParams();
+  params.set("scope", "day");
+  params.set("date", date);
+
+  return `/api/exports/metrics?${params.toString()}`;
+}
+
 export default async function DailyMetricsPage({
   searchParams,
 }: DailyMetricsPageProps) {
@@ -85,6 +93,7 @@ export default async function DailyMetricsPage({
     query,
     filledOnly,
   });
+  const exportHref = buildDailyMetricsExportHref(targetDateInput);
   const formRows = rows.map((row) => ({
     articleId: row.article.id,
     title: row.article.title,
@@ -120,6 +129,12 @@ export default async function DailyMetricsPage({
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={exportHref}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            >
+              CSVエクスポート
+            </Link>
             <Link
               href="/analytics"
               className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"

@@ -86,6 +86,19 @@ function getDeltaClass(value: number) {
   return "text-zinc-600";
 }
 
+function buildMetricsExportHref(period: {
+  range: string;
+  fromInput: string;
+  toInput: string;
+}) {
+  const params = new URLSearchParams();
+  params.set("range", period.range);
+  params.set("from", period.fromInput);
+  params.set("to", period.toInput);
+
+  return `/api/exports/metrics?${params.toString()}`;
+}
+
 function SectionHeader({
   title,
   description,
@@ -400,6 +413,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     "masterTransitions",
   );
   const improvementArticles = getImprovementArticles(articleRows);
+  const exportHref = buildMetricsExportHref(period);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8">
@@ -420,6 +434,12 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={exportHref}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            >
+              CSVエクスポート
+            </Link>
             <Link
               href="/metrics/daily"
               className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
