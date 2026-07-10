@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { deleteArticleAction } from "../actions";
+import DeleteArticleButton from "./DeleteArticleButton";
 import {
   calculatePurchaseRate,
   dateFormatter,
@@ -74,12 +76,18 @@ export default async function ArticleDetailPage({
             </h1>
           </div>
 
-          <Link
-            href={`/articles/${article.id}/edit`}
-            className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 sm:mt-1"
-          >
-            編集
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/articles/${article.id}/edit`}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 sm:mt-1"
+            >
+              編集
+            </Link>
+            <DeleteArticleButton
+              action={deleteArticleAction.bind(null, article.id)}
+              articleTitle={article.title}
+            />
+          </div>
         </div>
 
         <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

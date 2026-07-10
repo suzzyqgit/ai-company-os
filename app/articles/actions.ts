@@ -2,12 +2,17 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type ArticleFormActionState = {
   fieldErrors?: Partial<
     Record<"title" | "price" | "pv" | "purchases" | "updatedAt" | "memo", string>
   >;
+  formError?: string;
+};
+
+export type DeleteArticleActionState = {
   formError?: string;
 };
 
@@ -139,4 +144,34 @@ export async function updateArticleAction(
   revalidatePath("/articles");
   revalidatePath(`/articles/${id}`);
   redirect(`/articles/${id}`);
+}
+
+export async function deleteArticleAction(
+  id: string,
+  _previousState: DeleteArticleActionState,
+): Promise<DeleteArticleActionState> {
+  void _previousState;
+
+  try {
+    await prisma.article.delete({
+      where: { id },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return {
+        formError: "削除対象の記事が見つかりませんでした。",
+      };
+    }
+
+    return {
+      formError: "記事の削除に失敗しました。時間をおいてもう一度お試しください。",
+    };
+  }
+
+  revalidatePath("/articles");
+  revalidatePath(`/articles/${id}`);
+  redirect("/articles");
 }
