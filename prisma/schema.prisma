@@ -13,12 +13,34 @@ datasource db {
 }
 
 model Article {
-  id        String   @id @default(cuid())
-  title     String
-  price     Int
-  pv        Int
-  purchases Int
-  note      String   @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  title             String
+  price             Int
+  pv                Int
+  purchases         Int
+  baselinePv        Int      @default(0)
+  baselinePurchases Int      @default(0)
+  note              String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  dailyMetrics ArticleDailyMetric[]
+}
+
+model ArticleDailyMetric {
+  id                String   @id @default(cuid())
+  articleId         String
+  date              DateTime
+  pv                Int      @default(0)
+  purchases         Int      @default(0)
+  revenue           Int      @default(0)
+  masterTransitions Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, date])
+  @@index([date])
+  @@index([articleId, date])
 }

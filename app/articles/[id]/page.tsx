@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ArticleDailyMetricForm from "@/components/articles/ArticleDailyMetricForm";
+import ArticleDailyMetricTable from "@/components/articles/ArticleDailyMetricTable";
+import { upsertArticleDailyMetricAction } from "@/features/metrics/actions";
+import {
+  formatTokyoDateInputValue,
+} from "@/features/metrics/calculators";
+import { getArticleDailyMetrics } from "@/features/metrics/queries";
 import { prisma } from "@/lib/prisma";
 import { deleteArticleAction } from "../actions";
 import DeleteArticleButton from "./DeleteArticleButton";
@@ -29,9 +36,12 @@ export default async function ArticleDetailPage({
   params,
 }: ArticleDetailPageProps) {
   const { id } = await params;
-  const article = await prisma.article.findUnique({
-    where: { id },
-  });
+  const [article, dailyMetrics] = await Promise.all([
+    prisma.article.findUnique({
+      where: { id },
+    }),
+    getArticleDailyMetrics(id),
+  ]);
 
   if (!article) {
     notFound();
@@ -149,6 +159,25 @@ export default async function ArticleDetailPage({
               </div>
             </div>
           </aside>
+        </section>
+
+        <section className="mt-6 rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <div className="border-b border-zinc-200 px-5 py-4">
+            <h2 className="text-base font-semibold">日次実績</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              同じ記事・同じ日付は上書き保存され、累計PVと累計購入数へ同期されます。
+            </p>
+          </div>
+
+          <div className="border-b border-zinc-200 p-5">
+            <ArticleDailyMetricForm
+              action={upsertArticleDailyMetricAction.bind(null, article.id)}
+              articlePrice={article.price}
+              defaultDate={formatTokyoDateInputValue(new Date())}
+            />
+          </div>
+
+          <ArticleDailyMetricTable metrics={dailyMetrics} />
         </section>
       </div>
     </main>
