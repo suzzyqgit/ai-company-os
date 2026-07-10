@@ -419,12 +419,20 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
               日次実績から期間別の売上、PV、購入数、購入率を確認します。
             </p>
           </div>
-          <Link
-            href="/articles"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
-          >
-            記事一覧
-          </Link>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/metrics/daily"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            >
+              日次実績入力
+            </Link>
+            <Link
+              href="/articles"
+              className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            >
+              記事一覧
+            </Link>
+          </div>
         </div>
 
         <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">

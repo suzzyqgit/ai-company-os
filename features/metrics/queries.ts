@@ -16,6 +16,47 @@ export function getArticleDailyMetrics(articleId: string) {
   });
 }
 
+export async function getDailyMetricInputRows({
+  date,
+  query,
+  filledOnly,
+}: {
+  date: Date;
+  query: string;
+  filledOnly: boolean;
+}) {
+  const articles = await prisma.article.findMany({
+    where: query
+      ? {
+          title: {
+            contains: query,
+          },
+        }
+      : {},
+    include: {
+      dailyMetrics: {
+        where: { date },
+        take: 1,
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  return articles
+    .map((article) => {
+      const metric = article.dailyMetrics[0] ?? null;
+
+      return {
+        article,
+        metric,
+        hasMetric: metric !== null,
+      };
+    })
+    .filter((row) => !filledOnly || row.hasMetric);
+}
+
 export async function syncArticleTotalsFromDailyMetrics(
   articleId: string,
   client: PrismaTransaction = prisma,

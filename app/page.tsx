@@ -21,6 +21,7 @@ type DashboardArticle = {
 const quickActions = [
   { label: "記事一覧", href: "/articles", isDisabled: false },
   { label: "記事追加", href: "/articles/new", isDisabled: false },
+  { label: "日次実績入力", href: "/metrics/daily", isDisabled: false },
   { label: "売上管理", href: "/analytics", isDisabled: false },
   { label: "AI改善", href: "#", isDisabled: true },
 ];
@@ -165,7 +166,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-4 lg:min-w-[36rem]">
+          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[42rem] lg:grid-cols-5">
             {quickActions.map((action) =>
               action.isDisabled ? (
                 <span
