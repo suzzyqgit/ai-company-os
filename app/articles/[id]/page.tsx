@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ArticleAiAnalysisButton from "@/components/articles/ArticleAiAnalysisButton";
+import ArticleAiAnalysisReport from "@/components/articles/ArticleAiAnalysisReport";
 import ArticleDailyMetricForm from "@/components/articles/ArticleDailyMetricForm";
 import ArticleDailyMetricTable from "@/components/articles/ArticleDailyMetricTable";
-import { upsertArticleDailyMetricAction } from "@/features/metrics/actions";
+import { generateArticleAiAnalysisAction } from "@/features/ai/actions";
 import {
-  formatTokyoDateInputValue,
-} from "@/features/metrics/calculators";
+  getLatestSuccessfulArticleAnalysis,
+  toArticleAiAnalysisView,
+} from "@/features/ai/queries";
+import { upsertArticleDailyMetricAction } from "@/features/metrics/actions";
+import { formatTokyoDateInputValue } from "@/features/metrics/calculators";
 import { getArticleDailyMetrics } from "@/features/metrics/queries";
 import { prisma } from "@/lib/prisma";
 import { deleteArticleAction } from "../actions";
@@ -36,16 +41,19 @@ export default async function ArticleDetailPage({
   params,
 }: ArticleDetailPageProps) {
   const { id } = await params;
-  const [article, dailyMetrics] = await Promise.all([
+  const [article, dailyMetrics, latestAiAnalysisRun] = await Promise.all([
     prisma.article.findUnique({
       where: { id },
     }),
     getArticleDailyMetrics(id),
+    getLatestSuccessfulArticleAnalysis(id),
   ]);
 
   if (!article) {
     notFound();
   }
+
+  const latestAiAnalysis = toArticleAiAnalysisView(latestAiAnalysisRun);
 
   const metrics = [
     {
@@ -159,6 +167,22 @@ export default async function ArticleDetailPage({
               </div>
             </div>
           </aside>
+        </section>
+
+        <section className="mt-6 rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-base font-semibold">AI改善レポート</h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                タイトル、価格、累計値、過去30日の日次実績に基づいて改善提案を生成します。
+              </p>
+            </div>
+            <ArticleAiAnalysisButton
+              action={generateArticleAiAnalysisAction.bind(null, article.id)}
+            />
+          </div>
+
+          <ArticleAiAnalysisReport analysis={latestAiAnalysis} />
         </section>
 
         <section className="mt-6 rounded-lg border border-zinc-200 bg-white shadow-sm">
