@@ -21,7 +21,7 @@ type DashboardArticle = {
 const quickActions = [
   { label: "記事一覧", href: "/articles", isDisabled: false },
   { label: "記事追加", href: "/articles/new", isDisabled: false },
-  { label: "売上管理", href: "#", isDisabled: true },
+  { label: "売上管理", href: "/analytics", isDisabled: false },
   { label: "AI改善", href: "#", isDisabled: true },
 ];
 
