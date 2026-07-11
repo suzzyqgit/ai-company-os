@@ -25,6 +25,7 @@ export default function NewArticlePage() {
           formTitle="記事情報"
           initialValues={{
             title: "",
+            noteUrl: "",
             price: "",
             pv: "",
             purchases: "",

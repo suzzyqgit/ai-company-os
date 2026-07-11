@@ -7,6 +7,7 @@ import { calculatePurchaseRate } from "./utils";
 
 export type ArticleFormValues = {
   title: string;
+  noteUrl: string;
   price: string;
   pv: string;
   purchases: string;
@@ -92,6 +93,29 @@ export default function ArticleForm({
               className="mt-2 h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
             />
             <FieldError message={actionState.fieldErrors?.title} />
+          </div>
+
+          <div>
+            <label
+              htmlFor="noteUrl"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              note URL
+            </label>
+            <input
+              id="noteUrl"
+              name="noteUrl"
+              type="url"
+              inputMode="url"
+              value={values.noteUrl}
+              onChange={(event) => updateValue("noteUrl", event.target.value)}
+              placeholder="https://note.com/..."
+              className="mt-2 h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+            />
+            <p className="mt-2 text-sm text-zinc-500">
+              実際のnote記事URLを登録しておくと、あとから記事本文や実績との連携に使いやすくなります。
+            </p>
+            <FieldError message={actionState.fieldErrors?.noteUrl} />
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3">

@@ -15,6 +15,7 @@ datasource db {
 model Article {
   id                String   @id @default(cuid())
   title             String
+  noteUrl           String   @default("")
   price             Int
   pv                Int
   purchases         Int

@@ -310,9 +310,15 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 <tr>
                   <th
                     scope="col"
-                    className="w-[34rem] px-5 py-3 text-left font-semibold text-zinc-700"
+                    className="w-[30rem] px-5 py-3 text-left font-semibold text-zinc-700"
                   >
                     タイトル
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-left font-semibold text-zinc-700"
+                  >
+                    note
                   </th>
                   <th
                     scope="col"
@@ -361,6 +367,20 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                           {article.title}
                         </Link>
                       </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
+                        {article.noteUrl ? (
+                          <a
+                            href={article.noteUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-zinc-950 underline-offset-4 hover:underline"
+                          >
+                            開く
+                          </a>
+                        ) : (
+                          <span className="text-zinc-400">未設定</span>
+                        )}
+                      </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right tabular-nums text-zinc-700">
                         {yenFormatter.format(article.price)}
                       </td>
@@ -385,7 +405,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 ) : (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-5 py-12 text-center text-sm text-zinc-500"
                     >
                       該当する記事はありません。

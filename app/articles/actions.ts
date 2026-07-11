@@ -7,7 +7,10 @@ import { prisma } from "@/lib/prisma";
 
 export type ArticleFormActionState = {
   fieldErrors?: Partial<
-    Record<"title" | "price" | "pv" | "purchases" | "updatedAt" | "memo", string>
+    Record<
+      "title" | "noteUrl" | "price" | "pv" | "purchases" | "updatedAt" | "memo",
+      string
+    >
   >;
   formError?: string;
 };
@@ -18,6 +21,7 @@ export type DeleteArticleActionState = {
 
 type ParsedArticleInput = {
   title: string;
+  noteUrl: string;
   price: number;
   pv: number;
   purchases: number;
@@ -29,6 +33,7 @@ const requiredFields = ["title", "price", "pv", "purchases", "updatedAt"] as con
 const numericFields = ["price", "pv", "purchases"] as const;
 const fieldLabels = {
   title: "タイトル",
+  noteUrl: "note URL",
   price: "価格",
   pv: "PV",
   purchases: "購入数",
@@ -44,6 +49,7 @@ function getString(formData: FormData, key: string) {
 function parseArticleFormData(formData: FormData) {
   const raw = {
     title: getString(formData, "title"),
+    noteUrl: getString(formData, "noteUrl"),
     price: getString(formData, "price"),
     pv: getString(formData, "pv"),
     purchases: getString(formData, "purchases"),
@@ -74,6 +80,18 @@ function parseArticleFormData(formData: FormData) {
     }
   });
 
+  if (raw.noteUrl !== "") {
+    try {
+      const url = new URL(raw.noteUrl);
+
+      if (url.protocol !== "https:" && url.protocol !== "http:") {
+        fieldErrors.noteUrl = "note URLはhttpまたはhttpsのURLで入力してください。";
+      }
+    } catch {
+      fieldErrors.noteUrl = "note URLは正しいURLで入力してください。";
+    }
+  }
+
   const updatedAt = new Date(`${raw.updatedAt}T00:00:00.000Z`);
   if (raw.updatedAt !== "" && Number.isNaN(updatedAt.getTime())) {
     fieldErrors.updatedAt = "更新日は正しい日付で入力してください。";
@@ -86,6 +104,7 @@ function parseArticleFormData(formData: FormData) {
   return {
     data: {
       title: raw.title,
+      noteUrl: raw.noteUrl,
       price: Number(raw.price),
       pv: Number(raw.pv),
       purchases: Number(raw.purchases),

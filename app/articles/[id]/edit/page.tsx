@@ -45,6 +45,7 @@ export default async function ArticleEditPage({ params }: ArticleEditPageProps) 
           formTitle="編集内容"
           initialValues={{
             title: article.title,
+            noteUrl: article.noteUrl,
             price: String(article.price),
             pv: String(article.pv),
             purchases: String(article.purchases),

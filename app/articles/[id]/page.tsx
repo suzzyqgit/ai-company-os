@@ -139,6 +139,23 @@ export default async function ArticleDetailPage({
                 </dd>
               </div>
               <div className="grid gap-1 px-5 py-4 sm:grid-cols-[10rem_1fr] sm:gap-4">
+                <dt className="text-sm font-medium text-zinc-500">note URL</dt>
+                <dd className="text-sm text-zinc-700">
+                  {article.noteUrl ? (
+                    <a
+                      href={article.noteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-zinc-950 underline-offset-4 hover:underline"
+                    >
+                      {article.noteUrl}
+                    </a>
+                  ) : (
+                    <span className="text-zinc-400">未設定</span>
+                  )}
+                </dd>
+              </div>
+              <div className="grid gap-1 px-5 py-4 sm:grid-cols-[10rem_1fr] sm:gap-4">
                 <dt className="text-sm font-medium text-zinc-500">更新日</dt>
                 <dd className="text-sm tabular-nums text-zinc-700">
                   {dateFormatter.format(new Date(article.updatedAt))}
