@@ -1,0 +1,1 @@
+ALTER TABLE "Article" ADD COLUMN "status" TEXT NOT NULL DEFAULT 'active';

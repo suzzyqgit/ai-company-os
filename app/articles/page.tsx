@@ -354,7 +354,10 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
               </thead>
               <tbody className="divide-y divide-zinc-100 bg-white">
                 {articles.length > 0 ? (
-                  articles.map((article) => (
+                  articles.map((article) => {
+                    const noteUrl = article.noteUrl.trim();
+
+                    return (
                     <tr
                       key={article.id}
                       className="transition hover:bg-zinc-50"
@@ -368,9 +371,9 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                         </Link>
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
-                        {article.noteUrl ? (
+                        {noteUrl ? (
                           <a
-                            href={article.noteUrl}
+                            href={noteUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="font-medium text-zinc-950 underline-offset-4 hover:underline"
@@ -401,7 +404,8 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                         {dateFormatter.format(new Date(article.updatedAt))}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td

@@ -22,6 +22,7 @@ export type DeleteArticleActionState = {
 type ParsedArticleInput = {
   title: string;
   noteUrl: string;
+  status: string;
   price: number;
   pv: number;
   purchases: number;
@@ -105,6 +106,7 @@ function parseArticleFormData(formData: FormData) {
     data: {
       title: raw.title,
       noteUrl: raw.noteUrl,
+      status: "active",
       price: Number(raw.price),
       pv: Number(raw.pv),
       purchases: Number(raw.purchases),
