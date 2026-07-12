@@ -59,6 +59,7 @@ export type ArticleContentGap = {
   price: number;
   pv: number;
   purchases: number;
+  updatedAt: Date;
   conversionRate: number;
   freeArticleCount: number;
   missingCategories: string[];
@@ -271,6 +272,7 @@ export function analyzeContentGaps({
       price: article.price,
       pv: article.pv,
       purchases: article.purchases,
+      updatedAt: article.updatedAt,
       conversionRate,
       freeArticleCount: article.freeArticleIdeas.length + article.freeArticleDrafts.length,
       missingCategories,

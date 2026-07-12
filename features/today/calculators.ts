@@ -1,0 +1,209 @@
+import { formatTokyoDateInputValue, normalizeDateInputToTokyoDate } from "@/features/metrics/calculators";
+import type { ArticleContentGap } from "@/features/content-gap/calculators";
+import type { RuleBasedImprovement } from "@/features/ai-improvements/rules";
+
+export type TodayChecklistItem = {
+  key: TodayTaskKey;
+  label: string;
+  href: string;
+  completed: boolean;
+};
+
+export type TodayKpis = {
+  todayRevenue: number;
+  todayPv: number;
+  todayPurchases: number;
+  weekRevenue: number;
+  weekPurchases: number;
+  remainingPurchasesToGoal: number;
+};
+
+export type TodayPrimaryTask = {
+  title: string;
+  reason: string;
+  expectedEffect: string;
+  href: string;
+  buttonLabel: string;
+};
+
+export type TodayFreeArticlePlan = {
+  destinationArticleId: string;
+  destinationArticleTitle: string;
+  missingCategory: string;
+  recommendedTheme: string;
+  expectedImpact: number | null;
+  href: string;
+};
+
+export type TodayImprovementArticle = {
+  articleId: string;
+  title: string;
+  pv: number;
+  conversionRate: number;
+  price: number;
+  reason: string;
+};
+
+export type TodayRecentUpdate = {
+  id: string;
+  type: "OCR" | "CSV" | "無料記事" | "AI改善" | "公開記事同期";
+  title: string;
+  at: Date;
+  href: string;
+};
+
+export const todayPurchaseGoal = 5;
+export const todayChecklistDefinitions = [
+  { key: "import-ocr", label: "OCRを取り込む", href: "/imports/note-access" },
+  { key: "review-ai", label: "AI改善を確認する", href: "/ai-improvements" },
+  { key: "generate-free-article", label: "今日の記事を生成する", href: "/free-article-generator" },
+  { key: "review-cta", label: "CTAを見直す", href: "/content-gap" },
+  { key: "update-dashboard", label: "Dashboardを更新する", href: "/" },
+] as const;
+export type TodayTaskKey = (typeof todayChecklistDefinitions)[number]["key"];
+const todayTaskKeys = new Set<string>(
+  todayChecklistDefinitions.map((definition) => definition.key),
+);
+const priorityRank = {
+  高: 3,
+  中: 2,
+  低: 1,
+} satisfies Record<ArticleContentGap["priority"], number>;
+
+export function getTodayDateInput() {
+  return formatTokyoDateInputValue(new Date());
+}
+
+export function getTodayTokyoDate() {
+  const today = normalizeDateInputToTokyoDate(getTodayDateInput());
+
+  if (!today) {
+    throw new Error("Failed to resolve today's Tokyo date.");
+  }
+
+  return today;
+}
+
+export function getWeekStartTokyoDate(today: Date) {
+  const weekStart = new Date(today);
+  weekStart.setUTCDate(today.getUTCDate() - 6);
+  return weekStart;
+}
+
+export function buildChecklistItems(completedKeys: Set<string>): TodayChecklistItem[] {
+  return todayChecklistDefinitions.map((item) => ({
+    ...item,
+    completed: completedKeys.has(item.key),
+  }));
+}
+
+export function isTodayTaskKey(value: string): value is TodayTaskKey {
+  return value.length <= 64 && todayTaskKeys.has(value);
+}
+
+export function pickTodayImprovementArticle(
+  improvements: RuleBasedImprovement[],
+): TodayImprovementArticle | null {
+  const improvement = improvements[0];
+
+  if (!improvement) {
+    return null;
+  }
+
+  return {
+    articleId: improvement.articleId,
+    title: improvement.title,
+    pv: improvement.pv,
+    conversionRate: improvement.conversionRate,
+    price: improvement.price,
+    reason: improvement.improvementReason,
+  };
+}
+
+export function pickTodayFreeArticlePlan(
+  gaps: ArticleContentGap[],
+): TodayFreeArticlePlan | null {
+  const gap = [...gaps].sort(compareContentGapsForToday)[0];
+
+  if (!gap) {
+    return null;
+  }
+
+  const missingCategory = gap.missingCategories[0] ?? "認知";
+  const recommendedTheme =
+    gap.recommendedThemes[0] ?? `${gap.title}へ進む前に知りたい${missingCategory}`;
+  const params = new URLSearchParams({
+    articleId: gap.articleId,
+    category: missingCategory,
+  });
+
+  return {
+    destinationArticleId: gap.articleId,
+    destinationArticleTitle: gap.title,
+    missingCategory,
+    recommendedTheme,
+    expectedImpact: gap.expectedImpact > 0 ? gap.expectedImpact : null,
+    href: `/free-article-generator?${params.toString()}`,
+  };
+}
+
+function compareContentGapsForToday(
+  left: ArticleContentGap,
+  right: ArticleContentGap,
+) {
+  const expectedImpactDiff = right.expectedImpact - left.expectedImpact;
+
+  if (expectedImpactDiff !== 0) {
+    return expectedImpactDiff;
+  }
+
+  const priorityDiff = priorityRank[right.priority] - priorityRank[left.priority];
+
+  if (priorityDiff !== 0) {
+    return priorityDiff;
+  }
+
+  const missingCategoryDiff =
+    right.missingCategories.length - left.missingCategories.length;
+
+  if (missingCategoryDiff !== 0) {
+    return missingCategoryDiff;
+  }
+
+  const updatedAtDiff = left.updatedAt.getTime() - right.updatedAt.getTime();
+
+  if (updatedAtDiff !== 0) {
+    return updatedAtDiff;
+  }
+
+  return left.articleId.localeCompare(right.articleId);
+}
+
+export function buildPrimaryTask({
+  freeArticlePlan,
+}: {
+  freeArticlePlan: TodayFreeArticlePlan | null;
+}): TodayPrimaryTask {
+  if (!freeArticlePlan) {
+    return {
+      title: "AI改善を確認",
+      reason: "今日作る無料記事の候補がまだ十分にありません。",
+      expectedEffect: "改善対象の整理",
+      href: "/ai-improvements",
+      buttonLabel: "確認する",
+    };
+  }
+
+  const expectedEffect =
+    freeArticlePlan.expectedImpact === null
+      ? "算出データ不足"
+      : `+¥${freeArticlePlan.expectedImpact.toLocaleString("ja-JP")}`;
+
+  return {
+    title: "無料記事を1本作成",
+    reason: `${freeArticlePlan.destinationArticleTitle} の ${freeArticlePlan.missingCategory} 導線が不足しています。`,
+    expectedEffect,
+    href: freeArticlePlan.href,
+    buttonLabel: "生成する",
+  };
+}
