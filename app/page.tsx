@@ -22,9 +22,14 @@ const quickActions = [
   { label: "記事一覧", href: "/articles", isDisabled: false },
   { label: "記事追加", href: "/articles/new", isDisabled: false },
   { label: "日次実績入力", href: "/metrics/daily", isDisabled: false },
+  { label: "note販売履歴を取り込む", href: "/imports/note-sales", isDisabled: false },
+  { label: "note公開記事URL同期", href: "/imports/note-profile", isDisabled: false },
+  { label: "noteアクセスOCR", href: "/imports/note-access", isDisabled: false },
   { label: "売上管理", href: "/analytics", isDisabled: false },
   { label: "実運用へ移行", href: "/production-migration", isDisabled: false },
-  { label: "AI改善", href: "#", isDisabled: true },
+  { label: "AI改善", href: "/ai-improvements", isDisabled: false },
+  { label: "無料記事生成", href: "/free-article-generator", isDisabled: false },
+  { label: "ギャップ分析", href: "/content-gap", isDisabled: false },
 ];
 
 function getEstimatedRevenue(articles: DashboardArticle[]) {
@@ -167,7 +172,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[48rem] lg:grid-cols-6">
+          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[80rem] lg:grid-cols-10">
             {quickActions.map((action) =>
               action.isDisabled ? (
                 <span

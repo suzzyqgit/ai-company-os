@@ -16,6 +16,7 @@ model Article {
   id                String   @id @default(cuid())
   title             String
   noteUrl           String   @default("")
+  status            String   @default("active")
   price             Int
   pv                Int
   purchases         Int
@@ -27,6 +28,11 @@ model Article {
 
   dailyMetrics   ArticleDailyMetric[]
   aiAnalysisRuns AiAnalysisRun[]
+  noteSaleTransactions NoteSaleTransaction[]
+  accessImportItems ArticleAccessImportItem[]
+  freeArticleDrafts FreeArticleDraft[]
+  freeArticleIdeas FreeArticleIdea[]
+  contentGaps ContentGap[]
 }
 
 model ArticleDailyMetric {
@@ -68,4 +74,138 @@ model AiAnalysisRun {
 
   @@index([articleId, createdAt])
   @@index([inputHash])
+}
+
+model NoteSaleTransaction {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  articleId     String
+  occurredAt    DateTime
+  date          DateTime
+  type          String
+  contentType   String
+  title         String
+  amount        Int
+  sourceFile    String
+  createdAt     DateTime @default(now())
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, date])
+  @@index([date])
+}
+
+model ArticleAccessImportRun {
+  id              String   @id @default(cuid())
+  status          String
+  sourceFileCount Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items ArticleAccessImportItem[]
+}
+
+model ArticleAccessImportItem {
+  id             String   @id @default(cuid())
+  runId          String
+  articleId      String?
+  sourceFileName String
+  extractedTitle String
+  extractedPv    Int
+  previousPv     Int?
+  nextPv         Int?
+  status         String
+  warning        String?
+  rawText        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  run     ArticleAccessImportRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  article Article?               @relation(fields: [articleId], references: [id], onDelete: SetNull)
+
+  @@index([runId])
+  @@index([articleId])
+  @@index([createdAt])
+}
+
+model FreeArticleDraft {
+  id                   String   @id @default(cuid())
+  freeArticleIdeaId    String?  @unique
+  title                String
+  theme                String
+  targetReader         String
+  readerProblem        String
+  purpose              String
+  destinationArticleId String
+  destinationNoteUrl   String
+  titleIdeas           String
+  outline              String
+  body                 String
+  introduction         String
+  headings             String
+  summary              String
+  cta                  String
+  fullDraft            String
+  status               String   @default("ready")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  destinationArticle Article @relation(fields: [destinationArticleId], references: [id], onDelete: Cascade)
+  freeArticleIdea    FreeArticleIdea? @relation(fields: [freeArticleIdeaId], references: [id], onDelete: SetNull)
+
+  @@index([destinationArticleId])
+  @@index([theme])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model FreeArticleIdea {
+  id                   String   @id @default(cuid())
+  destinationArticleId String
+  theme                String
+  title                String
+  searchIntent         String
+  targetReader         String
+  readerProblem        String
+  angle                String
+  funnelRole           String
+  expectedCta          String
+  priority             String
+  duplicateScore       Int      @default(0)
+  titleSimilarityScore Int      @default(0)
+  status               String   @default("generated")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  destinationArticle Article @relation(fields: [destinationArticleId], references: [id], onDelete: Cascade)
+  draft              FreeArticleDraft?
+
+  @@index([destinationArticleId])
+  @@index([searchIntent])
+  @@index([funnelRole])
+  @@index([priority])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ContentGap {
+  id             String   @id @default(cuid())
+  articleId      String
+  category       String
+  status         String
+  score          Int      @default(0)
+  priority       String
+  recommendation String
+  expectedImpact Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, category])
+  @@index([articleId])
+  @@index([category])
+  @@index([status])
+  @@index([priority])
+  @@index([expectedImpact])
 }
