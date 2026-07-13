@@ -30,6 +30,7 @@ const quickActions = [
   { label: "実運用へ移行", href: "/production-migration", isDisabled: false },
   { label: "AI改善", href: "/ai-improvements", isDisabled: false },
   { label: "無料記事生成", href: "/free-article-generator", isDisabled: false },
+  { label: "無料記事管理", href: "/free-articles", isDisabled: false },
   { label: "ギャップ分析", href: "/content-gap", isDisabled: false },
 ];
 

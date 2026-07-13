@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { analyzeContentGaps, getContentGapSummary } from "./calculators";
 
 export async function getContentGapAnalysis() {
-  const [paidArticles, publishedFreeArticles] = await Promise.all([
+  const [paidArticles, publishedFreeArticles, publishedFreeDrafts] = await Promise.all([
     prisma.article.findMany({
       where: {
         status: "active",
@@ -52,10 +52,36 @@ export async function getContentGapAnalysis() {
         updatedAt: "desc",
       },
     }),
+    prisma.freeArticleDraft.findMany({
+      where: {
+        status: "PUBLISHED",
+      },
+      select: {
+        destinationArticleId: true,
+        title: true,
+        theme: true,
+        body: true,
+        fullDraft: true,
+        publishedPv: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    }),
   ]);
   const gaps = analyzeContentGaps({
     paidArticles,
-    publishedFreeArticles,
+    publishedFreeArticles: [
+      ...publishedFreeArticles,
+      ...publishedFreeDrafts.map((draft) => ({
+        destinationArticleId: draft.destinationArticleId,
+        title: draft.title,
+        note: `${draft.theme}\n${draft.body || draft.fullDraft}`,
+        pv: draft.publishedPv,
+        updatedAt: draft.updatedAt,
+      })),
+    ],
   });
 
   return {

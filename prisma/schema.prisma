@@ -146,7 +146,13 @@ model FreeArticleDraft {
   summary              String
   cta                  String
   fullDraft            String
-  status               String   @default("ready")
+  status               String   @default("READY")
+  publishedAt          DateTime?
+  publishedUrl         String   @default("")
+  publishedPv          Int      @default(0)
+  referralCount        Int      @default(0)
+  purchaseCount        Int      @default(0)
+  improvementCount     Int      @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -156,6 +162,7 @@ model FreeArticleDraft {
   @@index([destinationArticleId])
   @@index([theme])
   @@index([status])
+  @@index([publishedAt])
   @@index([createdAt])
 }
 

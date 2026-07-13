@@ -349,7 +349,7 @@ export async function saveSelectedFreeArticleDraftAction(
         summary: generated.summary,
         cta: generated.cta,
         fullDraft: generated.fullDraft,
-        status: "ready",
+        status: "READY",
       },
       update: {
         title: generated.title,
@@ -366,7 +366,7 @@ export async function saveSelectedFreeArticleDraftAction(
         summary: generated.summary,
         cta: generated.cta,
         fullDraft: generated.fullDraft,
-        status: "ready",
+        status: "READY",
       },
       select: {
         id: true,
@@ -383,6 +383,9 @@ export async function saveSelectedFreeArticleDraftAction(
   ]);
 
   revalidatePath("/free-article-generator");
+  revalidatePath("/free-articles");
+  revalidatePath("/content-gap");
+  revalidatePath("/today");
 
   return {
     result: {

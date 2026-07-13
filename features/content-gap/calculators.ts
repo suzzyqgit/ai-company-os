@@ -34,6 +34,7 @@ export type ContentGapSourceArticle = {
 };
 
 export type ContentGapPublishedFreeArticle = {
+  destinationArticleId?: string;
   title: string;
   note: string;
   pv: number;
@@ -96,6 +97,10 @@ function matchesArticleContext(
   article: ContentGapSourceArticle,
   freeArticle: ContentGapPublishedFreeArticle,
 ) {
+  if (freeArticle.destinationArticleId) {
+    return freeArticle.destinationArticleId === article.id;
+  }
+
   const articleKeywords = normalize(`${article.title} ${article.note}`)
     .split(/[、。,.・|｜/／\s]/)
     .filter((keyword) => keyword.length >= 3)
@@ -204,8 +209,10 @@ export function analyzeContentGaps({
           includesAnyKeyword(text, categoryDefinition.keywords)
         );
       }).length;
-      const draftCount = article.freeArticleDrafts.filter((draft) =>
-        includesAnyKeyword(`${draft.title} ${draft.theme}`, categoryDefinition.keywords),
+      const draftCount = article.freeArticleDrafts.filter(
+        (draft) =>
+          !["ARCHIVED", "PUBLISHED"].includes(draft.status.toUpperCase()) &&
+          includesAnyKeyword(`${draft.title} ${draft.theme}`, categoryDefinition.keywords),
       ).length;
       const publishedCount = publishedFreeArticles.filter(
         (freeArticle) =>
@@ -274,7 +281,11 @@ export function analyzeContentGaps({
       purchases: article.purchases,
       updatedAt: article.updatedAt,
       conversionRate,
-      freeArticleCount: article.freeArticleIdeas.length + article.freeArticleDrafts.length,
+      freeArticleCount:
+        article.freeArticleIdeas.length +
+        article.freeArticleDrafts.filter(
+          (draft) => draft.status.toUpperCase() !== "ARCHIVED",
+        ).length,
       missingCategories,
       recommendedThemes: missingCategories
         .slice(0, 3)

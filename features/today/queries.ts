@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getTodayAiImprovements } from "@/features/ai-improvements/queries";
 import { getContentGapAnalysis } from "@/features/content-gap/queries";
+import { getFreeArticlePipelineDraftStatusByArticle } from "@/features/free-articles/queries";
 import {
+  applyFreeArticlePipelineStatus,
   buildChecklistItems,
   buildPrimaryTask,
   getTodayTokyoDate,
@@ -143,7 +145,16 @@ export async function getTodayData() {
         todayMetrics.reduce((total, metric) => total + metric.purchases, 0),
     ),
   };
-  const freeArticlePlan = pickTodayFreeArticlePlan(contentGapAnalysis.gaps);
+  const baseFreeArticlePlan = pickTodayFreeArticlePlan(contentGapAnalysis.gaps);
+  const pipelineDraft = baseFreeArticlePlan
+    ? await getFreeArticlePipelineDraftStatusByArticle(
+        baseFreeArticlePlan.destinationArticleId,
+      )
+    : null;
+  const freeArticlePlan =
+    baseFreeArticlePlan === null
+      ? null
+      : applyFreeArticlePipelineStatus(baseFreeArticlePlan, pipelineDraft?.status ?? null);
   const improvementArticle = pickTodayImprovementArticle(improvements);
   const primaryTask = buildPrimaryTask({
     freeArticlePlan,

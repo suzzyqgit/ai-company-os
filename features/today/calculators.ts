@@ -1,6 +1,7 @@
 import { formatTokyoDateInputValue, normalizeDateInputToTokyoDate } from "@/features/metrics/calculators";
 import type { ArticleContentGap } from "@/features/content-gap/calculators";
 import type { RuleBasedImprovement } from "@/features/ai-improvements/rules";
+import type { FreeArticlePipelineStatus } from "@/features/free-articles/status";
 
 export type TodayChecklistItem = {
   key: TodayTaskKey;
@@ -32,6 +33,8 @@ export type TodayFreeArticlePlan = {
   missingCategory: string;
   recommendedTheme: string;
   expectedImpact: number | null;
+  pipelineStatus: FreeArticlePipelineStatus | null;
+  actionLabel: string;
   href: string;
 };
 
@@ -143,8 +146,57 @@ export function pickTodayFreeArticlePlan(
     missingCategory,
     recommendedTheme,
     expectedImpact: gap.expectedImpact > 0 ? gap.expectedImpact : null,
+    pipelineStatus: null,
+    actionLabel: "記事生成",
     href: `/free-article-generator?${params.toString()}`,
   };
+}
+
+export function applyFreeArticlePipelineStatus(
+  plan: TodayFreeArticlePlan,
+  status: FreeArticlePipelineStatus | null,
+): TodayFreeArticlePlan {
+  if (!status) {
+    return plan;
+  }
+
+  if (status === "PUBLISHED") {
+    return {
+      ...plan,
+      pipelineStatus: status,
+      actionLabel: "改善候補へ",
+      href: "/free-articles",
+    };
+  }
+
+  if (status === "READY") {
+    return {
+      ...plan,
+      pipelineStatus: status,
+      actionLabel: "公開してください",
+      href: "/free-articles",
+    };
+  }
+
+  if (status === "DRAFT" || status === "REVIEW") {
+    return {
+      ...plan,
+      pipelineStatus: status,
+      actionLabel: "編集へ",
+      href: "/free-articles",
+    };
+  }
+
+  if (status === "IMPROVING") {
+    return {
+      ...plan,
+      pipelineStatus: status,
+      actionLabel: "改善状況を見る",
+      href: "/free-articles",
+    };
+  }
+
+  return plan;
 }
 
 function compareContentGapsForToday(
@@ -204,6 +256,6 @@ export function buildPrimaryTask({
     reason: `${freeArticlePlan.destinationArticleTitle} の ${freeArticlePlan.missingCategory} 導線が不足しています。`,
     expectedEffect,
     href: freeArticlePlan.href,
-    buttonLabel: "生成する",
+    buttonLabel: freeArticlePlan.actionLabel,
   };
 }

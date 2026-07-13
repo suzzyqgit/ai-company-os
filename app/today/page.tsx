@@ -187,12 +187,16 @@ export default async function TodayPage() {
                     <span className="font-semibold text-zinc-950">おすすめテーマ:</span>{" "}
                     {freeArticlePlan.recommendedTheme}
                   </p>
+                  <p>
+                    <span className="font-semibold text-zinc-950">パイプライン:</span>{" "}
+                    {freeArticlePlan.pipelineStatus ?? "未作成"}
+                  </p>
                 </div>
                 <Link
                   href={freeArticlePlan.href}
                   className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
                 >
-                  記事生成
+                  {freeArticlePlan.actionLabel}
                 </Link>
               </div>
             ) : (
