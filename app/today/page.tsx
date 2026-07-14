@@ -45,16 +45,19 @@ export default async function TodayPage() {
     todayKpis,
     recentUpdates,
   } = await getTodayData();
+  const importUpdates = recentUpdates.filter((update) =>
+    ["OCR", "CSV", "公開記事同期"].includes(update.type),
+  );
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-zinc-500">Sprint 1</p>
+            <p className="text-sm font-medium text-zinc-500">Today</p>
             <h1 className="mt-2 text-3xl font-bold tracking-normal">Today</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-              今日やるべき改善、作る記事、確認すべき数字を一画面にまとめます。
+              今日のKPI、やること、改善記事、公開する無料記事、必要な取込に集中します。
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -65,16 +68,16 @@ export default async function TodayPage() {
               Dashboard
             </Link>
             <Link
-              href="/content-gap"
+              href="/imports"
               className="inline-flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-zinc-200 transition hover:bg-zinc-50"
             >
-              Gap分析
+              データ取込
             </Link>
             <Link
-              href="/free-article-generator"
+              href="/free-articles"
               className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
             >
-              記事生成
+              無料記事
             </Link>
           </div>
         </div>
@@ -205,47 +208,48 @@ export default async function TodayPage() {
           </Section>
         </div>
 
-        <Section title="最近の更新">
-          {recentUpdates.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-zinc-200 text-sm">
-                <thead className="bg-zinc-100">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">
-                      種別
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">
-                      内容
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">
-                      更新日時
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 bg-white">
-                  {recentUpdates.map((update) => (
-                    <tr key={update.id}>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-zinc-950">
-                        {update.type}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-700">
-                        <Link
-                          href={update.href}
-                          className="underline-offset-4 hover:underline"
-                        >
-                          {update.title}
-                        </Link>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-zinc-600">
-                        {dateFormatter.format(update.at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <Section title="今日必要な取込">
+          {importUpdates.length > 0 ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              {importUpdates.map((update) => (
+                <Link
+                  key={update.id}
+                  href={update.href}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 transition hover:bg-zinc-100"
+                >
+                  <p className="text-xs font-semibold text-zinc-500">
+                    {update.type}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-zinc-950">
+                    {update.title}
+                  </p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    最終更新 {dateFormatter.format(update.at)}
+                  </p>
+                </Link>
+              ))}
             </div>
           ) : (
-            <EmptyState message="最近の更新はまだありません。" />
+            <div className="grid gap-3 md:grid-cols-3">
+              <Link
+                href="/imports/note-access"
+                className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                noteアクセスOCRを取り込む
+              </Link>
+              <Link
+                href="/imports/note-sales"
+                className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                販売履歴CSVを取り込む
+              </Link>
+              <Link
+                href="/imports/note-profile"
+                className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                公開記事URLを同期する
+              </Link>
+            </div>
           )}
         </Section>
       </div>
