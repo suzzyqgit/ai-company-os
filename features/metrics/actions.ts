@@ -1,13 +1,17 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { revalidateDailyMetrics } from "@/features/revalidation/paths";
 import {
   formatTokyoDateInputValue,
   normalizeDateInputToTokyoDate,
 } from "./calculators";
-import { syncArticleTotalsFromDailyMetrics } from "./queries";
+import {
+  getCsvSalesTotalsByArticleIdsForDate,
+  getCsvSalesTotalsForArticleDate,
+  syncArticleTotalsFromDailyMetrics,
+} from "./queries";
 
 type MetricField = "date" | "pv" | "purchases" | "revenue" | "masterTransitions";
 
@@ -127,6 +131,18 @@ export async function upsertArticleDailyMetricAction(
 
   try {
     await prisma.$transaction(async (transaction) => {
+      const csvSalesTotals = await getCsvSalesTotalsForArticleDate(
+        articleId,
+        parsed.data.date,
+        transaction,
+      );
+      const purchases = csvSalesTotals.hasTransactions
+        ? csvSalesTotals.purchases
+        : parsed.data.purchases;
+      const revenue = csvSalesTotals.hasTransactions
+        ? csvSalesTotals.revenue
+        : parsed.data.revenue;
+
       await transaction.articleDailyMetric.upsert({
         where: {
           articleId_date: {
@@ -136,16 +152,16 @@ export async function upsertArticleDailyMetricAction(
         },
         update: {
           pv: parsed.data.pv,
-          purchases: parsed.data.purchases,
-          revenue: parsed.data.revenue,
+          purchases,
+          revenue,
           masterTransitions: parsed.data.masterTransitions,
         },
         create: {
           articleId,
           date: parsed.data.date,
           pv: parsed.data.pv,
-          purchases: parsed.data.purchases,
-          revenue: parsed.data.revenue,
+          purchases,
+          revenue,
           masterTransitions: parsed.data.masterTransitions,
         },
       });
@@ -158,9 +174,7 @@ export async function upsertArticleDailyMetricAction(
     };
   }
 
-  revalidatePath("/");
-  revalidatePath("/articles");
-  revalidatePath(`/articles/${articleId}`);
+  revalidateDailyMetrics([articleId]);
   redirect(`/articles/${articleId}`);
 }
 
@@ -217,6 +231,10 @@ export async function bulkUpsertArticleDailyMetricsAction(
   const existingMetricArticleIds = new Set(
     existingMetrics.map((metric) => metric.articleId),
   );
+  const csvSalesTotalsByArticleId = await getCsvSalesTotalsByArticleIdsForDate({
+    articleIds: uniqueArticleIds,
+    date,
+  });
   const rowErrors: Record<string, string> = {};
   const parsedRows: Array<{
     articleId: string;
@@ -239,9 +257,14 @@ export async function bulkUpsertArticleDailyMetricsAction(
       revenue: getString(formData, `revenue-${articleId}`),
       masterTransitions: getString(formData, `masterTransitions-${articleId}`),
     };
+    const csvSalesTotals = csvSalesTotalsByArticleId.get(articleId) ?? null;
     const pv = parseNonNegativeInteger(raw.pv);
-    const purchases = parseNonNegativeInteger(raw.purchases);
-    const revenue = parseNonNegativeInteger(raw.revenue);
+    const purchases = csvSalesTotals
+      ? csvSalesTotals.purchases
+      : parseNonNegativeInteger(raw.purchases);
+    const revenue = csvSalesTotals
+      ? csvSalesTotals.revenue
+      : parseNonNegativeInteger(raw.revenue);
     const masterTransitions = parseNonNegativeInteger(raw.masterTransitions);
 
     if (
@@ -265,7 +288,8 @@ export async function bulkUpsertArticleDailyMetricsAction(
         purchases > 0 ||
         revenue > 0 ||
         masterTransitions > 0 ||
-        existingMetricArticleIds.has(articleId),
+        existingMetricArticleIds.has(articleId) ||
+        csvSalesTotals !== null,
     });
   });
 
@@ -316,13 +340,7 @@ export async function bulkUpsertArticleDailyMetricsAction(
     };
   }
 
-  revalidatePath("/");
-  revalidatePath("/analytics");
-  revalidatePath("/articles");
-  revalidatePath("/metrics/daily");
-  affectedArticleIds.forEach((articleId) => {
-    revalidatePath(`/articles/${articleId}`);
-  });
+  revalidateDailyMetrics(affectedArticleIds);
 
   const query = redirectQuery || `date=${formatTokyoDateInputValue(date)}`;
   redirect(`/metrics/daily?${query}&saved=1`);

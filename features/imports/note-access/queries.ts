@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { applyCumulativePvSnapshotToArticle } from "@/features/metrics/queries";
 import type { NoteAccessExtractedItem } from "./types";
 
 export async function getArticlesForAccessImport() {
@@ -53,7 +54,6 @@ export async function applyNoteAccessImport({
             },
             select: {
               id: true,
-              pv: true,
             },
           })
         : [];
@@ -62,6 +62,7 @@ export async function applyNoteAccessImport({
     let updatedArticles = 0;
     let warningItems = 0;
     let skippedItems = 0;
+    const affectedArticleIds = new Set<string>();
 
     for (const item of items) {
       const article = item.selectedArticleId
@@ -76,27 +77,22 @@ export async function applyNoteAccessImport({
         skippedItems += 1;
         warning = warning ?? "Articleが選択されていないため、PV更新をスキップしました。";
       } else {
-        previousPv = article.pv;
-        nextPv = item.selectedPv;
+        const pvResult = await applyCumulativePvSnapshotToArticle({
+          articleId: article.id,
+          cumulativePv: item.selectedPv,
+          client: transaction,
+        });
 
-        if (item.selectedPv < article.pv) {
-          status = "warning_decrease";
-          warning = `抽出PVが現在値 ${article.pv} より小さいため、Article.pvは更新していません。`;
+        previousPv = pvResult.previousPv;
+        nextPv = pvResult.nextPv;
+        status = pvResult.status;
+        warning = pvResult.warning ?? warning;
+
+        if (pvResult.status === "warning_decrease") {
           warningItems += 1;
-        } else if (item.selectedPv === article.pv) {
-          status = "unchanged";
-        } else {
-          await transaction.article.update({
-            where: {
-              id: article.id,
-            },
-            data: {
-              pv: item.selectedPv,
-            },
-          });
-          article.pv = item.selectedPv;
-          status = "updated";
+        } else if (pvResult.status === "updated") {
           updatedArticles += 1;
+          affectedArticleIds.add(article.id);
         }
       }
 
@@ -122,6 +118,7 @@ export async function applyNoteAccessImport({
       warningItems,
       skippedItems,
       savedItems: items.length,
+      affectedArticleIds: Array.from(affectedArticleIds),
     };
   });
 }

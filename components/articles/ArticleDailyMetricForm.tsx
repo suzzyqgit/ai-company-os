@@ -177,7 +177,7 @@ export default function ArticleDailyMetricForm({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-zinc-500">
-          売上は当日の実績として保存します。購入数入力時に現在価格から候補を入れますが、手動修正できます。
+          販売履歴CSVがある日の購入数・売上はCSVを正本として固定します。手動入力ではPVとMaster遷移数を更新できます。
         </p>
         <button
           type="submit"

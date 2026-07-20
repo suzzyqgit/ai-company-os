@@ -11,6 +11,7 @@ type DailyMetricInputRow = {
   price: number;
   totalPv: number;
   totalPurchases: number;
+  hasCsvSales: boolean;
   metric: {
     pv: number;
     purchases: number;
@@ -217,6 +218,11 @@ export default function DailyMetricsBulkForm({
                             入力済み
                           </p>
                         ) : null}
+                        {row.hasCsvSales ? (
+                          <p className="mt-1 text-xs font-medium text-blue-700">
+                            販売履歴CSVを正本としてロック
+                          </p>
+                        ) : null}
                         {rowError ? (
                           <p className="mt-2 text-xs font-medium text-red-600">
                             {rowError}
@@ -255,6 +261,7 @@ export default function DailyMetricsBulkForm({
                           type="number"
                           min="0"
                           value={rowValues?.purchases ?? "0"}
+                          disabled={row.hasCsvSales}
                           onChange={(event) =>
                             updateRowValue(
                               row.articleId,
@@ -263,7 +270,7 @@ export default function DailyMetricsBulkForm({
                               row.price,
                             )
                           }
-                          className="h-10 w-28 rounded-md border border-zinc-300 bg-white px-3 text-right text-sm tabular-nums shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                          className="h-10 w-28 rounded-md border border-zinc-300 bg-white px-3 text-right text-sm tabular-nums shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
                         />
                       </td>
                       <td className="px-5 py-4">
@@ -272,6 +279,7 @@ export default function DailyMetricsBulkForm({
                           type="number"
                           min="0"
                           value={rowValues?.revenue ?? "0"}
+                          disabled={row.hasCsvSales}
                           onChange={(event) =>
                             updateRowValue(
                               row.articleId,
@@ -280,7 +288,7 @@ export default function DailyMetricsBulkForm({
                               row.price,
                             )
                           }
-                          className="h-10 w-32 rounded-md border border-zinc-300 bg-white px-3 text-right text-sm tabular-nums shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                          className="h-10 w-32 rounded-md border border-zinc-300 bg-white px-3 text-right text-sm tabular-nums shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
                         />
                       </td>
                       <td className="px-5 py-4">
@@ -320,7 +328,7 @@ export default function DailyMetricsBulkForm({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-zinc-500">
-          未登録で全て0の行は保存しません。既存レコードを0にした場合は0値で更新して保持します。
+          未登録で全て0の行は保存しません。販売履歴CSVがある日の購入数・売上はCSVを正本として固定し、PVとMaster遷移数だけ手動更新できます。
         </p>
         <button
           type="submit"

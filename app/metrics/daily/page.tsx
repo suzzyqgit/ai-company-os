@@ -100,6 +100,7 @@ export default async function DailyMetricsPage({
     price: row.article.price,
     totalPv: row.article.pv,
     totalPurchases: row.article.purchases,
+    hasCsvSales: row.hasCsvSales,
     metric: row.metric
       ? {
           pv: row.metric.pv,
