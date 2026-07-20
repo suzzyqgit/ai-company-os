@@ -34,7 +34,7 @@ export type ContentGapSourceArticle = {
 };
 
 export type ContentGapPublishedFreeArticle = {
-  destinationArticleId?: string;
+  destinationArticleId?: string | null;
   title: string;
   note: string;
   pv: number;

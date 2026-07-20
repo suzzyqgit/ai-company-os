@@ -74,13 +74,15 @@ export async function getContentGapAnalysis() {
     paidArticles,
     publishedFreeArticles: [
       ...publishedFreeArticles,
-      ...publishedFreeDrafts.map((draft) => ({
-        destinationArticleId: draft.destinationArticleId,
-        title: draft.title,
-        note: `${draft.theme}\n${draft.body || draft.fullDraft}`,
-        pv: draft.publishedPv,
-        updatedAt: draft.updatedAt,
-      })),
+      ...publishedFreeDrafts
+        .filter((draft) => draft.destinationArticleId !== null)
+        .map((draft) => ({
+          destinationArticleId: draft.destinationArticleId,
+          title: draft.title,
+          note: `${draft.theme}\n${draft.body || draft.fullDraft}`,
+          pv: draft.publishedPv,
+          updatedAt: draft.updatedAt,
+        })),
     ],
   });
 

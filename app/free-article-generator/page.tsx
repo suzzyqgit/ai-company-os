@@ -109,7 +109,7 @@ export default async function FreeArticleGeneratorPage({
                       </td>
                       <td className="px-5 py-4 text-zinc-700">{draft.theme}</td>
                       <td className="px-5 py-4 text-zinc-700">
-                        {draft.destinationArticle.title}
+                        {draft.destinationArticle?.title ?? "送客先未設定"}
                       </td>
                       <td className="px-5 py-4 text-zinc-700">{draft.status}</td>
                     </tr>
