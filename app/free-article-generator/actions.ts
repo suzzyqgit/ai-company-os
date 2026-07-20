@@ -1,13 +1,18 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
+  FREE_ARTICLE_CTA_URL,
   generateFreeArticleDraft,
   generateFreeArticleIdeas,
   type FreeArticleDestination,
 } from "@/features/free-article-generator/generator";
 import { getFreeArticleGenerationHistory } from "@/features/free-article-generator/queries";
+import {
+  revalidateFreeArticleGenerator,
+  revalidateFreeArticlePipeline,
+} from "@/features/revalidation/paths";
 
 type GeneratedIdeaView = {
   id: string;
@@ -223,7 +228,7 @@ export async function generateFreeArticleCandidatesAction(
     ),
   );
 
-  revalidatePath("/free-article-generator");
+  revalidateFreeArticleGenerator();
 
   return {
     result: {
@@ -340,7 +345,7 @@ export async function saveSelectedFreeArticleDraftAction(
         readerProblem: generated.readerProblem,
         purpose: generated.purpose,
         destinationArticleId: destinationArticle.id,
-        destinationNoteUrl: destinationArticle.noteUrl,
+        destinationNoteUrl: FREE_ARTICLE_CTA_URL,
         titleIdeas: JSON.stringify(generated.titleIdeas),
         outline: generated.outline,
         body: generated.body,
@@ -357,7 +362,7 @@ export async function saveSelectedFreeArticleDraftAction(
         targetReader: generated.targetReader,
         readerProblem: generated.readerProblem,
         purpose: generated.purpose,
-        destinationNoteUrl: destinationArticle.noteUrl,
+        destinationNoteUrl: FREE_ARTICLE_CTA_URL,
         titleIdeas: JSON.stringify(generated.titleIdeas),
         outline: generated.outline,
         body: generated.body,
@@ -382,19 +387,7 @@ export async function saveSelectedFreeArticleDraftAction(
     }),
   ]);
 
-  revalidatePath("/free-article-generator");
-  revalidatePath("/free-articles");
-  revalidatePath("/content-gap");
-  revalidatePath("/today");
+  revalidateFreeArticlePipeline([draft.id]);
 
-  return {
-    result: {
-      id: draft.id,
-      title: generated.title,
-      titleIdeas: generated.titleIdeas,
-      outline: generated.outline,
-      fullDraft: generated.fullDraft,
-      destinationNoteUrl: destinationArticle.noteUrl,
-    },
-  };
+  redirect(`/free-articles/${draft.id}`);
 }
