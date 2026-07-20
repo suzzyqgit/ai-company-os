@@ -1,6 +1,8 @@
 import { formatTokyoDateInputValue, normalizeDateInputToTokyoDate } from "@/features/metrics/calculators";
 import type { ArticleContentGap } from "@/features/content-gap/calculators";
 import type { RuleBasedImprovement } from "@/features/ai-improvements/rules";
+import type { FreeArticleEvaluation } from "@/features/free-articles/evaluation";
+import type { FreeArticleImprovementSuggestion } from "@/features/free-articles/improvements";
 import type { FreeArticlePipelineStatus } from "@/features/free-articles/status";
 
 export type TodayChecklistItem = {
@@ -8,6 +10,26 @@ export type TodayChecklistItem = {
   label: string;
   href: string;
   completed: boolean;
+};
+
+export type TodayPrePublishFreeArticle = {
+  id: string;
+  title: string;
+  status: FreeArticlePipelineStatus;
+  updatedAt: Date;
+  href: string;
+};
+
+export type TodayFreeArticleImprovementCandidate = {
+  id: string;
+  title: string;
+  publishedPv: number;
+  referralCount: number;
+  purchaseCount: number;
+  improvementCount: number;
+  evaluation: FreeArticleEvaluation;
+  improvementSuggestions: FreeArticleImprovementSuggestion[];
+  href: string;
 };
 
 export type TodayKpis = {
@@ -34,6 +56,7 @@ export type TodayFreeArticlePlan = {
   recommendedTheme: string;
   expectedImpact: number | null;
   pipelineStatus: FreeArticlePipelineStatus | null;
+  pipelineImprovementCount: number | null;
   actionLabel: string;
   href: string;
 };
@@ -60,6 +83,7 @@ export const todayChecklistDefinitions = [
   { key: "import-ocr", label: "OCRを取り込む", href: "/imports/note-access" },
   { key: "review-ai", label: "AI改善を確認する", href: "/ai-improvements" },
   { key: "generate-free-article", label: "今日の記事を生成する", href: "/free-article-generator" },
+  { key: "complete-publish-checklist", label: "公開チェックリストを確認する", href: "/free-articles" },
   { key: "review-cta", label: "CTAを見直す", href: "/content-gap" },
   { key: "update-dashboard", label: "Dashboardを更新する", href: "/" },
 ] as const;
@@ -147,6 +171,7 @@ export function pickTodayFreeArticlePlan(
     recommendedTheme,
     expectedImpact: gap.expectedImpact > 0 ? gap.expectedImpact : null,
     pipelineStatus: null,
+    pipelineImprovementCount: null,
     actionLabel: "記事生成",
     href: `/free-article-generator?${params.toString()}`,
   };
@@ -155,6 +180,7 @@ export function pickTodayFreeArticlePlan(
 export function applyFreeArticlePipelineStatus(
   plan: TodayFreeArticlePlan,
   status: FreeArticlePipelineStatus | null,
+  improvementCount: number | null = null,
 ): TodayFreeArticlePlan {
   if (!status) {
     return plan;
@@ -164,7 +190,8 @@ export function applyFreeArticlePipelineStatus(
     return {
       ...plan,
       pipelineStatus: status,
-      actionLabel: "改善候補へ",
+      pipelineImprovementCount: improvementCount,
+      actionLabel: improvementCount === 0 ? "改善へ送る" : "改善履歴を見る",
       href: "/free-articles",
     };
   }
@@ -173,6 +200,7 @@ export function applyFreeArticlePipelineStatus(
     return {
       ...plan,
       pipelineStatus: status,
+      pipelineImprovementCount: improvementCount,
       actionLabel: "公開してください",
       href: "/free-articles",
     };
@@ -182,6 +210,7 @@ export function applyFreeArticlePipelineStatus(
     return {
       ...plan,
       pipelineStatus: status,
+      pipelineImprovementCount: improvementCount,
       actionLabel: "編集へ",
       href: "/free-articles",
     };
@@ -191,6 +220,7 @@ export function applyFreeArticlePipelineStatus(
     return {
       ...plan,
       pipelineStatus: status,
+      pipelineImprovementCount: improvementCount,
       actionLabel: "改善状況を見る",
       href: "/free-articles",
     };

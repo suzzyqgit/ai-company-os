@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { dateFormatter, numberFormatter, yenFormatter } from "@/app/articles/utils";
+import {
+  freeArticleStatusLabels,
+  getFreeArticleStatusClass,
+} from "@/features/free-articles/status";
 import { getTodayData } from "@/features/today/queries";
 import TodayChecklist from "./TodayChecklist";
 
@@ -36,12 +40,27 @@ function EmptyState({ message }: { message: string }) {
   return <p className="text-sm text-zinc-500">{message}</p>;
 }
 
+function getPriorityClass(priority: string) {
+  if (priority === "高") {
+    return "bg-red-100 text-red-700 ring-red-200";
+  }
+
+  if (priority === "中") {
+    return "bg-amber-100 text-amber-700 ring-amber-200";
+  }
+
+  return "bg-emerald-100 text-emerald-700 ring-emerald-200";
+}
+
 export default async function TodayPage() {
   const {
+    advisorRecommendation,
     primaryTask,
     checklistItems,
     improvementArticle,
     freeArticlePlan,
+    freeArticleImprovementCandidates,
+    prePublishArticles,
     todayKpis,
     recentUpdates,
   } = await getTodayData();
@@ -83,7 +102,46 @@ export default async function TodayPage() {
         </div>
 
         <section className="rounded-xl border border-zinc-900 bg-zinc-950 p-6 text-white shadow-sm">
-          <p className="text-sm font-medium text-zinc-300">今日の最重要タスク</p>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-medium text-zinc-300">今日のおすすめ</p>
+                <span
+                  className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold ring-1 ${getPriorityClass(
+                    advisorRecommendation.priority,
+                  )}`}
+                >
+                  優先度 {advisorRecommendation.priority}
+                </span>
+                <span className="inline-flex h-7 items-center rounded-full bg-white/10 px-3 text-xs font-semibold text-zinc-200 ring-1 ring-white/10">
+                  {advisorRecommendation.estimatedMinutes}分
+                </span>
+              </div>
+              <h2 className="mt-4 text-2xl font-bold tracking-normal">
+                {advisorRecommendation.title}
+              </h2>
+              <dl className="mt-4 grid gap-3 text-sm leading-6 text-zinc-200 lg:grid-cols-2">
+                <div>
+                  <dt className="font-semibold text-white">理由</dt>
+                  <dd>{advisorRecommendation.reason}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-white">期待効果</dt>
+                  <dd>{advisorRecommendation.expectedEffect}</dd>
+                </div>
+              </dl>
+            </div>
+            <Link
+              href={advisorRecommendation.href}
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-zinc-950 shadow-sm transition hover:bg-zinc-100"
+            >
+              {advisorRecommendation.buttonLabel}
+            </Link>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-900 bg-zinc-950 p-6 text-white shadow-sm">
+          <p className="text-sm font-medium text-zinc-300">今日の補助タスク</p>
           <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className="text-2xl font-bold tracking-normal">
@@ -194,6 +252,14 @@ export default async function TodayPage() {
                     <span className="font-semibold text-zinc-950">パイプライン:</span>{" "}
                     {freeArticlePlan.pipelineStatus ?? "未作成"}
                   </p>
+                  {freeArticlePlan.pipelineStatus === "PUBLISHED" &&
+                  freeArticlePlan.pipelineImprovementCount !== null ? (
+                    <p>
+                      <span className="font-semibold text-zinc-950">改善回数:</span>{" "}
+                      {numberFormatter.format(freeArticlePlan.pipelineImprovementCount)}
+                      回
+                    </p>
+                  ) : null}
                 </div>
                 <Link
                   href={freeArticlePlan.href}
@@ -207,6 +273,116 @@ export default async function TodayPage() {
             )}
           </Section>
         </div>
+
+        <Section title="今日改善する無料記事">
+          {freeArticleImprovementCandidates.length > 0 ? (
+            <div className="grid gap-3">
+              {freeArticleImprovementCandidates.map((article) => (
+                <Link
+                  key={article.id}
+                  href={article.href}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 transition hover:bg-zinc-100"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold leading-6 text-zinc-950">
+                        {article.title}
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600">
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          PV {numberFormatter.format(article.publishedPv)}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          送客 {numberFormatter.format(article.referralCount)}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          改善 {numberFormatter.format(article.improvementCount)}回
+                        </span>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 text-right">
+                      <span className="w-fit justify-self-start rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 sm:justify-self-end">
+                        {article.evaluation.phaseLabel}
+                      </span>
+                      <span
+                        className={`w-fit justify-self-start rounded-md px-2 py-1 text-xs font-bold ring-1 sm:justify-self-end ${getPriorityClass(
+                          article.evaluation.priority,
+                        )}`}
+                      >
+                        評価 {article.evaluation.grade} / 優先度{" "}
+                        {article.evaluation.priority}
+                      </span>
+                    </div>
+                  </div>
+                  <ul className="mt-3 grid gap-1 text-xs text-zinc-600">
+                    {article.evaluation.reasons.slice(0, 3).map((reason) => (
+                      <li key={reason}>・{reason}</li>
+                    ))}
+                  </ul>
+                  {article.improvementSuggestions.length > 0 ? (
+                    <div className="mt-3 rounded-md bg-white p-3 ring-1 ring-zinc-200">
+                      <p className="text-xs font-semibold text-zinc-900">
+                        改善提案
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {article.improvementSuggestions.slice(0, 3).map((suggestion) => (
+                          <span
+                            key={suggestion.category}
+                            className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700"
+                          >
+                            {suggestion.category}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  <p className="mt-3 text-xs font-semibold text-zinc-700">
+                    改善画面へ
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState message="改善優先度が高い公開済み無料記事はありません。" />
+          )}
+        </Section>
+
+        <Section title="公開前の記事">
+          {prePublishArticles.length > 0 ? (
+            <div className="grid gap-3">
+              {prePublishArticles.map((article) => (
+                <Link
+                  key={article.id}
+                  href={article.href}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 transition hover:bg-zinc-100"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold leading-6 text-zinc-950">
+                        {article.title}
+                      </h3>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        更新日 {dateFormatter.format(article.updatedAt)}
+                      </p>
+                    </div>
+                    <span
+                      className={`w-fit rounded-md px-2 py-1 text-xs font-semibold ring-1 ${getFreeArticleStatusClass(
+                        article.status,
+                      )}`}
+                    >
+                      {freeArticleStatusLabels[article.status]}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-zinc-600">
+                    詳細画面で公開チェックリストを確認
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState message="公開前の記事はありません。" />
+          )}
+        </Section>
 
         <Section title="今日必要な取込">
           {importUpdates.length > 0 ? (

@@ -1,7 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { getTodayAiImprovements } from "@/features/ai-improvements/queries";
 import { getContentGapAnalysis } from "@/features/content-gap/queries";
+import {
+  compareFreeArticleEvaluations,
+  evaluateFreeArticle,
+} from "@/features/free-articles/evaluation";
+import { generateFreeArticleImprovementSuggestions } from "@/features/free-articles/improvements";
 import { getFreeArticlePipelineDraftStatusByArticle } from "@/features/free-articles/queries";
+import {
+  getTodayFreeArticleStatusRank,
+  normalizeFreeArticleStatus,
+} from "@/features/free-articles/status";
+import { buildTodayAdvisorRecommendation } from "./advisor";
 import {
   applyFreeArticlePipelineStatus,
   buildChecklistItems,
@@ -11,6 +21,8 @@ import {
   pickTodayFreeArticlePlan,
   pickTodayImprovementArticle,
   todayPurchaseGoal,
+  type TodayFreeArticleImprovementCandidate,
+  type TodayPrePublishFreeArticle,
   type TodayRecentUpdate,
 } from "./calculators";
 
@@ -30,6 +42,8 @@ export async function getTodayData() {
     recentOcrRuns,
     recentCsvTransactions,
     recentFreeDrafts,
+    prePublishDrafts,
+    publishedFreeDrafts,
     recentAiRuns,
     recentSyncedArticles,
   ] = await Promise.all([
@@ -99,6 +113,35 @@ export async function getTodayData() {
         createdAt: true,
       },
     }),
+    prisma.freeArticleDraft.findMany({
+      where: {
+        status: {
+          in: ["DRAFT", "REVIEW", "READY"],
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        updatedAt: true,
+      },
+      take: 10,
+    }),
+    prisma.freeArticleDraft.findMany({
+      where: {
+        status: "PUBLISHED",
+      },
+      select: {
+        id: true,
+        title: true,
+        publishedPv: true,
+        referralCount: true,
+        purchaseCount: true,
+        improvementCount: true,
+        publishedAt: true,
+        updatedAt: true,
+      },
+    }),
     prisma.aiAnalysisRun.findMany({
       orderBy: {
         createdAt: "desc",
@@ -132,7 +175,110 @@ export async function getTodayData() {
     }),
   ]);
   const completedKeys = new Set(completions.map((completion) => completion.taskKey));
-  const checklistItems = buildChecklistItems(completedKeys);
+  const prePublishArticles = prePublishDrafts
+    .map((draft) => ({
+      id: draft.id,
+      title: draft.title,
+      status: normalizeFreeArticleStatus(draft.status),
+      updatedAt: draft.updatedAt,
+      href: `/free-articles/${draft.id}`,
+    }))
+    .filter(
+      (draft): draft is TodayPrePublishFreeArticle =>
+        draft.status === "DRAFT" ||
+        draft.status === "REVIEW" ||
+        draft.status === "READY",
+    )
+    .sort((left, right) => {
+      const statusDiff =
+        getTodayFreeArticleStatusRank(right.status) -
+        getTodayFreeArticleStatusRank(left.status);
+
+      if (statusDiff !== 0) {
+        return statusDiff;
+      }
+
+      const updatedAtDiff = right.updatedAt.getTime() - left.updatedAt.getTime();
+
+      if (updatedAtDiff !== 0) {
+        return updatedAtDiff;
+      }
+
+      return left.id.localeCompare(right.id);
+    })
+    .slice(0, 5);
+  const checklistItems = buildChecklistItems(completedKeys).filter(
+    (item) =>
+      item.key !== "complete-publish-checklist" || prePublishArticles.length > 0,
+  );
+  const freeArticleImprovementCandidates = publishedFreeDrafts
+    .map((draft) => ({
+      id: draft.id,
+      title: draft.title,
+      publishedPv: draft.publishedPv,
+      referralCount: draft.referralCount,
+      purchaseCount: draft.purchaseCount,
+      improvementCount: draft.improvementCount,
+      publishedAt: draft.publishedAt,
+      updatedAt: draft.updatedAt,
+      evaluation: evaluateFreeArticle({
+        id: draft.id,
+        title: draft.title,
+        publishedPv: draft.publishedPv,
+        referralCount: draft.referralCount,
+        purchaseCount: draft.purchaseCount,
+        improvementCount: draft.improvementCount,
+        publishedAt: draft.publishedAt,
+        updatedAt: draft.updatedAt,
+      }),
+      href: `/free-articles/${draft.id}`,
+    }))
+    .map((draft) => ({
+      ...draft,
+      improvementSuggestions: generateFreeArticleImprovementSuggestions({
+        id: draft.id,
+        title: draft.title,
+        publishedPv: draft.publishedPv,
+        referralCount: draft.referralCount,
+        purchaseCount: draft.purchaseCount,
+        improvementCount: draft.improvementCount,
+        publishedAt: draft.publishedAt,
+        updatedAt: draft.updatedAt,
+        evaluation: draft.evaluation,
+      }),
+    }))
+    .filter(
+      (draft) =>
+        draft.evaluation.phase === "formal" &&
+        (draft.evaluation.grade === "D" ||
+          draft.evaluation.grade === "C" ||
+          draft.evaluation.grade === "B"),
+    )
+    .sort(compareFreeArticleEvaluations)
+    .slice(0, 5)
+    .map(
+      ({
+        id,
+        title,
+        publishedPv,
+        referralCount,
+        purchaseCount,
+        improvementCount,
+        evaluation,
+        improvementSuggestions,
+        href,
+      }): TodayFreeArticleImprovementCandidate => ({
+        id,
+        title,
+        publishedPv,
+        referralCount,
+        purchaseCount,
+        improvementCount,
+        evaluation,
+        improvementSuggestions,
+        href,
+      }),
+    );
   const todayKpis = {
     todayRevenue: todayMetrics.reduce((total, metric) => total + metric.revenue, 0),
     todayPv: todayMetrics.reduce((total, metric) => total + metric.pv, 0),
@@ -154,10 +300,25 @@ export async function getTodayData() {
   const freeArticlePlan =
     baseFreeArticlePlan === null
       ? null
-      : applyFreeArticlePipelineStatus(baseFreeArticlePlan, pipelineDraft?.status ?? null);
+      : applyFreeArticlePipelineStatus(
+          baseFreeArticlePlan,
+          pipelineDraft?.status ?? null,
+          pipelineDraft?.improvementCount ?? null,
+        );
   const improvementArticle = pickTodayImprovementArticle(improvements);
   const primaryTask = buildPrimaryTask({
     freeArticlePlan,
+  });
+  const latestOcrAt = recentOcrRuns[0]?.createdAt ?? null;
+  const latestCsvAt = recentCsvTransactions[0]?.createdAt ?? null;
+  const advisorRecommendation = buildTodayAdvisorRecommendation({
+    today,
+    todayKpis,
+    improvementArticle,
+    freeArticlePlan,
+    contentGaps: contentGapAnalysis.gaps,
+    latestOcrAt,
+    latestCsvAt,
   });
   const recentUpdates = [
     ...recentOcrRuns.map((run) =>
@@ -210,10 +371,13 @@ export async function getTodayData() {
     .slice(0, 5);
 
   return {
+    advisorRecommendation,
     primaryTask,
     checklistItems,
     improvementArticle,
     freeArticlePlan,
+    freeArticleImprovementCandidates,
+    prePublishArticles,
     todayKpis,
     recentUpdates,
   };
