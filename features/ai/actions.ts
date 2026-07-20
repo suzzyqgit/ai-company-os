@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { revalidateAiAnalysis } from "@/features/revalidation/paths";
 import { createInputHash } from "./hash";
 import { MissingOpenAiApiKeyError, generateArticleAnalysis } from "./openai";
 import {
@@ -34,7 +34,7 @@ export async function generateArticleAiAnalysisAction(
   const cachedRun = await getCachedSuccessfulAnalysis(inputHash);
 
   if (cachedRun) {
-    revalidatePath(`/articles/${articleId}`);
+    revalidateAiAnalysis(articleId);
     return {
       message: "同じ入力のAI改善レポートを再表示しました。",
       cached: true,
@@ -75,7 +75,7 @@ export async function generateArticleAiAnalysisAction(
       },
     });
 
-    revalidatePath(`/articles/${articleId}`);
+    revalidateAiAnalysis(articleId);
     return {
       message: "AI改善レポートを生成しました。",
     };
@@ -93,7 +93,7 @@ export async function generateArticleAiAnalysisAction(
       },
     });
 
-    revalidatePath(`/articles/${articleId}`);
+    revalidateAiAnalysis(articleId);
     return {
       error: safeMessage,
     };

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   summarizeRows,
   summarizeRowsByArticle,
@@ -18,6 +17,7 @@ import type {
   NoteSalesRowIssue,
   ParsedNoteSaleRow,
 } from "@/features/imports/note-sales/types";
+import { revalidateSalesImport } from "@/features/revalidation/paths";
 
 export type NoteSalesImportActionState = {
   formError?: string;
@@ -323,13 +323,7 @@ export async function executeNoteSalesImportAction(
       shouldUpdatePrices,
     });
 
-    revalidatePath("/");
-    revalidatePath("/articles");
-    revalidatePath("/analytics");
-    revalidatePath("/metrics/daily");
-    result.affectedArticleIds.forEach((articleId) => {
-      revalidatePath(`/articles/${articleId}`);
-    });
+    revalidateSalesImport(result.affectedArticleIds);
 
     return {
       result,

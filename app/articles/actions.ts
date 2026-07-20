@@ -1,9 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  revalidateArticleData,
+  revalidateArticleFormData,
+} from "@/features/revalidation/paths";
 
 export type ArticleFormActionState = {
   fieldErrors?: Partial<
@@ -136,7 +139,8 @@ export async function createArticleAction(
     };
   }
 
-  revalidatePath("/articles");
+  revalidateArticleData();
+  revalidateArticleFormData();
   redirect("/articles");
 }
 
@@ -162,8 +166,8 @@ export async function updateArticleAction(
     };
   }
 
-  revalidatePath("/articles");
-  revalidatePath(`/articles/${id}`);
+  revalidateArticleData([id]);
+  revalidateArticleFormData([id]);
   redirect(`/articles/${id}`);
 }
 
@@ -192,7 +196,6 @@ export async function deleteArticleAction(
     };
   }
 
-  revalidatePath("/articles");
-  revalidatePath(`/articles/${id}`);
+  revalidateArticleData([id]);
   redirect("/articles");
 }

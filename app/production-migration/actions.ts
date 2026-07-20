@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { revalidateProductionMigration } from "@/features/revalidation/paths";
 
 export type ProductionMigrationActionState = {
   formError?: string;
@@ -71,10 +71,7 @@ export async function migrateToProductionAction(
     };
   }
 
-  revalidatePath("/");
-  revalidatePath("/articles");
-  revalidatePath("/analytics");
-  revalidatePath("/production-migration");
+  revalidateProductionMigration();
 
   redirect(`/production-migration?deleted=${result.deletedCount}`);
 }

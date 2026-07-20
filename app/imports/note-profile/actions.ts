@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { fetchNoteProfileArticles } from "@/features/imports/note-profile/api";
 import { matchPublicArticlesToArticles } from "@/features/imports/note-profile/matcher";
 import {
   applyNoteProfileImport,
   getArticlesForNoteProfileMatching,
 } from "@/features/imports/note-profile/queries";
+import { revalidateNoteProfileImport } from "@/features/revalidation/paths";
 import type {
   NoteProfileImportPayload,
   NoteProfileImportResult,
@@ -166,9 +166,7 @@ export async function executeNoteProfileImportAction(
       selectedMissingNoteUrls,
     });
 
-    revalidatePath("/");
-    revalidatePath("/articles");
-    revalidatePath("/analytics");
+    revalidateNoteProfileImport();
 
     return {
       result,

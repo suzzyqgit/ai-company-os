@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import {
   getTodayTokyoDate,
   isTodayTaskKey,
   type TodayTaskKey,
 } from "@/features/today/calculators";
+import { revalidateToday } from "@/features/revalidation/paths";
 
 type TodayTaskCompletionResult =
   | {
@@ -72,7 +72,7 @@ export async function updateTodayTaskCompletionAction(
     };
   }
 
-  revalidatePath("/today");
+  revalidateToday();
 
   return {
     ok: true,
