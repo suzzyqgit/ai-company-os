@@ -14,3 +14,4 @@ dist/
 /prisma/dev.db-journal
 /prisma/dev.db-shm
 /prisma/dev.db-wal
+/prisma/dev.db.backup-*
