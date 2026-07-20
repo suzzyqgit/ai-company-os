@@ -12,6 +12,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ActorType {
+  HUMAN
+  AI
+  SYSTEM
+}
+
+enum ActorStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -229,4 +240,76 @@ model TodayTaskCompletion {
   @@unique([date, taskKey])
   @@index([date])
   @@index([taskKey])
+}
+
+model Actor {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  displayName String
+  actorType   ActorType
+  status      ActorStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  actorRoles         ActorRole[]
+  assignedActorRoles ActorRole[] @relation("ActorRoleAssignedBy")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  actorRoles      ActorRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  resource    String
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@index([resource])
+  @@index([action])
+}
+
+model ActorRole {
+  id                String   @id @default(cuid())
+  actorId           String
+  roleId            String
+  assignedAt        DateTime @default(now())
+  assignedByActorId String?
+
+  actor           Actor  @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  role            Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedByActor Actor? @relation("ActorRoleAssignedBy", fields: [assignedByActorId], references: [id], onDelete: SetNull)
+
+  @@unique([actorId, roleId])
+  @@index([actorId])
+  @@index([roleId])
+  @@index([assignedByActorId])
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  assignedAt   DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }
