@@ -3,6 +3,7 @@ export type NoteAccessExtractedItem = {
   extractedTitle: string;
   normalizedTitle: string;
   extractedPv: number;
+  originalOcrLine: string;
   rawText: string;
   matchedArticleId: string | null;
   matchedArticleTitle: string | null;
@@ -31,6 +32,7 @@ export type NoteAccessImportPayload = {
     extractedTitle: string;
     normalizedTitle: string;
     extractedPv: number;
+    originalOcrLine: string;
     rawText: string;
   }>;
 };
@@ -41,4 +43,5 @@ export type NoteAccessImportResult = {
   warningItems: number;
   skippedItems: number;
   savedItems: number;
+  affectedArticleIds: string[];
 };

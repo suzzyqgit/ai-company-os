@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { findBestArticleMatch } from "@/features/imports/note-access/matcher";
+import { normalizeOcrTitle } from "@/features/imports/note-access/normalizer";
 import { runTesseractOcr } from "@/features/imports/note-access/ocr";
 import { parseNoteAccessColumnOcrText } from "@/features/imports/note-access/parser";
 import { preprocessNoteAccessImage } from "@/features/imports/note-access/preprocess";
@@ -15,6 +15,7 @@ import type {
   NoteAccessImportResult,
   NoteAccessPreview,
 } from "@/features/imports/note-access/types";
+import { revalidateAccessImport } from "@/features/revalidation/paths";
 
 export type NoteAccessImportActionState = {
   formError?: string;
@@ -125,6 +126,7 @@ function decodePayload(value: string): NoteAccessImportPayload | null {
         typeof candidate.extractedPv === "number" &&
         Number.isInteger(candidate.extractedPv) &&
         candidate.extractedPv >= 0 &&
+        typeof candidate.originalOcrLine === "string" &&
         typeof candidate.rawText === "string"
       );
     });
@@ -276,6 +278,7 @@ export async function previewNoteAccessImportAction(
           extractedTitle: parsedItem.extractedTitle,
           normalizedTitle: parsedItem.normalizedTitle,
           extractedPv: parsedItem.extractedPv,
+          originalOcrLine: parsedItem.originalOcrLine,
           rawText,
           matchedArticleId,
           matchedArticleTitle: match?.article.title ?? null,
@@ -307,6 +310,7 @@ export async function previewNoteAccessImportAction(
             extractedTitle: item.extractedTitle,
             normalizedTitle: item.normalizedTitle,
             extractedPv: item.extractedPv,
+            originalOcrLine: item.originalOcrLine,
             rawText: item.rawText,
           })),
         }),
@@ -335,12 +339,14 @@ export async function executeNoteAccessImportAction(
 
   const selectedItems = payload.items.map((item, index) => {
     const selectedArticleId = getString(formData, `articleId-${index}`) || null;
+    const selectedTitle = getString(formData, `title-${index}`) || item.extractedTitle;
     const pvText = getString(formData, `pv-${index}`);
     const selectedPv = pvText === "" ? Number.NaN : Number(pvText);
 
     return {
       item,
       selectedArticleId,
+      selectedTitle,
       selectedPv,
     };
   });
@@ -356,7 +362,7 @@ export async function executeNoteAccessImportAction(
 
   const articles = await getArticlesForAccessImport();
   const articleById = new Map(articles.map((article) => [article.id, article]));
-  const items = selectedItems.map(({ item, selectedArticleId, selectedPv }) => {
+  const items = selectedItems.map(({ item, selectedArticleId, selectedTitle, selectedPv }) => {
     const selectedArticle = selectedArticleId
       ? articleById.get(selectedArticleId)
       : null;
@@ -368,9 +374,10 @@ export async function executeNoteAccessImportAction(
 
     return {
       sourceFileName: item.sourceFileName,
-      extractedTitle: item.extractedTitle,
-      normalizedTitle: item.normalizedTitle,
+      extractedTitle: selectedTitle,
+      normalizedTitle: normalizeOcrTitle(selectedTitle),
       extractedPv: item.extractedPv,
+      originalOcrLine: item.originalOcrLine,
       rawText: item.rawText,
       matchedArticleId: selectedArticle?.id ?? null,
       matchedArticleTitle: selectedArticle?.title ?? null,
@@ -390,9 +397,7 @@ export async function executeNoteAccessImportAction(
       items,
     });
 
-    revalidatePath("/");
-    revalidatePath("/articles");
-    revalidatePath("/analytics");
+    revalidateAccessImport(result.affectedArticleIds);
 
     return {
       result,

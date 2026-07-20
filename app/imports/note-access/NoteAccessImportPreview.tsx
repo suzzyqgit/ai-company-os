@@ -17,6 +17,7 @@ type NoteAccessImportPreviewProps = {
 };
 
 const initialState: NoteAccessImportActionState = {};
+const autoSelectThreshold = 0.8;
 
 function SummaryCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -27,6 +28,27 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
       </p>
     </div>
   );
+}
+
+function getRowStatus(item: NoteAccessPreview["items"][number]) {
+  if (item.warning) {
+    return {
+      label: item.warning,
+      className: "bg-amber-50 text-amber-700 ring-amber-200",
+    };
+  }
+
+  if (!item.matchedArticleId || item.matchSimilarity < autoSelectThreshold) {
+    return {
+      label: "要確認",
+      className: "bg-amber-50 text-amber-700 ring-amber-200",
+    };
+  }
+
+  return {
+    label: "更新候補",
+    className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  };
 }
 
 export default function NoteAccessImportPreview({
@@ -111,6 +133,9 @@ export default function NoteAccessImportPreview({
                   画像
                 </th>
                 <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                  OCR原文
+                </th>
+                <th className="px-5 py-3 text-left font-semibold text-zinc-700">
                   OCRタイトル
                 </th>
                 <th className="px-5 py-3 text-left font-semibold text-zinc-700">
@@ -134,14 +159,25 @@ export default function NoteAccessImportPreview({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 bg-white">
-              {preview.items.map((item, index) => (
-                <tr key={`${item.sourceFileName}-${index}`} className="hover:bg-zinc-50">
-                  <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
-                    {item.sourceFileName}
-                  </td>
-                  <td className="min-w-96 px-5 py-4 font-medium text-zinc-950">
-                    {item.extractedTitle}
-                  </td>
+              {preview.items.map((item, index) => {
+                const status = getRowStatus(item);
+
+                return (
+                  <tr key={`${item.sourceFileName}-${index}`} className="hover:bg-zinc-50">
+                    <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
+                      {item.sourceFileName}
+                    </td>
+                    <td className="min-w-80 px-5 py-4 text-xs leading-5 text-zinc-600">
+                      {item.originalOcrLine}
+                    </td>
+                    <td className="min-w-96 px-5 py-4">
+                      <input
+                        name={`title-${index}`}
+                        type="text"
+                        defaultValue={item.extractedTitle}
+                        className="h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 shadow-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                      />
+                    </td>
                   <td className="min-w-96 px-5 py-4 text-zinc-700">
                     {item.normalizedTitle}
                   </td>
@@ -195,18 +231,15 @@ export default function NoteAccessImportPreview({
                     />
                   </td>
                   <td className="min-w-72 px-5 py-4 text-zinc-700">
-                    {item.warning ? (
-                      <span className="inline-flex rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                        {item.warning}
-                      </span>
-                    ) : (
-                      <span className="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                        更新候補
-                      </span>
-                    )}
+                    <span
+                      className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ring-1 ${status.className}`}
+                    >
+                      {status.label}
+                    </span>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
