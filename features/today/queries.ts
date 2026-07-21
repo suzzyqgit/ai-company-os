@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { getTodayAiImprovements } from "@/features/ai-improvements/queries";
 import { getContentGapAnalysis } from "@/features/content-gap/queries";
+import { getRevenueReviewQueue } from "@/features/revenue/queries";
+import {
+  compareTodayRevenueReviewQueueItems,
+  TODAY_REVIEW_READY_FROM_DAYS,
+  TODAY_REVIEW_READY_TO_DAYS,
+} from "@/features/revenue/review";
 import {
   compareFreeArticleEvaluations,
   evaluateFreeArticle,
@@ -25,13 +31,18 @@ import {
   type TodayPrePublishFreeArticle,
   type TodayRecentUpdate,
   type TodayRevenueActionQueueItem,
+  type TodayRevenueReviewQueueItem,
 } from "./calculators";
 
 function toRecentUpdate(update: TodayRecentUpdate) {
   return update;
 }
 
-export async function getTodayData() {
+export async function getTodayData({
+  includeRevenueReviewQueue = true,
+}: {
+  includeRevenueReviewQueue?: boolean;
+} = {}) {
   const today = getTodayTokyoDate();
   const weekStart = getWeekStartTokyoDate(today);
   const [
@@ -213,6 +224,32 @@ export async function getTodayData() {
         priority: task.priority,
         createdAt: task.createdAt,
         article: task.article,
+      }),
+    );
+  const revenueReviewQueue = includeRevenueReviewQueue
+    ? await getRevenueReviewQueue(today)
+    : [];
+  const todayRevenueReviewCandidates = revenueReviewQueue
+    .filter(
+      (item) =>
+        item.phase === "REVIEW_READY" &&
+        item.daysSinceCompletion >= TODAY_REVIEW_READY_FROM_DAYS &&
+        item.daysSinceCompletion <= TODAY_REVIEW_READY_TO_DAYS,
+    )
+    .sort(compareTodayRevenueReviewQueueItems);
+  const revenueReviewQueueItems = todayRevenueReviewCandidates
+    .slice(0, 3)
+    .map(
+      (item): TodayRevenueReviewQueueItem => ({
+        taskId: item.taskId,
+        taskTitle: item.taskTitle,
+        articleId: item.articleId,
+        articleTitle: item.articleTitle,
+        completedAt: item.completedAt,
+        priority: item.priority,
+        revenueDelta: item.evidence.delta.revenue,
+        result: item.result,
+        nextAction: item.nextAction,
       }),
     );
   const completedKeys = new Set(completions.map((completion) => completion.taskKey));
@@ -423,5 +460,7 @@ export async function getTodayData() {
     recentUpdates,
     revenueActionQueueItems,
     hasMoreRevenueActionQueueItems: revenueActionQueueCandidates.length > 5,
+    revenueReviewQueueItems,
+    hasMoreRevenueReviewQueueItems: todayRevenueReviewCandidates.length > 3,
   };
 }

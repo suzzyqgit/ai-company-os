@@ -4,6 +4,10 @@ import type { RuleBasedImprovement } from "@/features/ai-improvements/rules";
 import type { FreeArticleEvaluation } from "@/features/free-articles/evaluation";
 import type { FreeArticleImprovementSuggestion } from "@/features/free-articles/improvements";
 import type { FreeArticlePipelineStatus } from "@/features/free-articles/status";
+import type {
+  RevenueReviewNextAction,
+  RevenueReviewResult,
+} from "@/features/revenue/review";
 
 export type TodayChecklistItem = {
   key: TodayTaskKey;
@@ -88,6 +92,18 @@ export type TodayRevenueActionQueueItem = {
     id: string;
     title: string;
   } | null;
+};
+
+export type TodayRevenueReviewQueueItem = {
+  taskId: string;
+  taskTitle: string;
+  articleId: string;
+  articleTitle: string | null;
+  completedAt: Date;
+  priority: number;
+  revenueDelta: number;
+  result: RevenueReviewResult;
+  nextAction: RevenueReviewNextAction;
 };
 
 export const todayPurchaseGoal = 5;

@@ -40,6 +40,18 @@ function EmptyState({ message }: { message: string }) {
   return <p className="text-sm text-zinc-500">{message}</p>;
 }
 
+const revenueReviewResultLabels = {
+  POSITIVE_SIGNAL: "改善シグナルあり",
+  NO_POSITIVE_SIGNAL: "改善シグナルなし",
+  INSUFFICIENT_DATA: "データ不足",
+} as const;
+
+const revenueReviewNextActionLabels = {
+  CONTINUE: "継続",
+  RETRY: "再試行",
+  OBSERVE: "観察",
+} as const;
+
 function getPriorityClass(priority: string) {
   if (priority === "高") {
     return "bg-red-100 text-red-700 ring-red-200";
@@ -65,6 +77,8 @@ export default async function TodayPage() {
     recentUpdates,
     revenueActionQueueItems,
     hasMoreRevenueActionQueueItems,
+    revenueReviewQueueItems,
+    hasMoreRevenueReviewQueueItems,
   } = await getTodayData();
   const importUpdates = recentUpdates.filter((update) =>
     ["OCR", "CSV", "公開記事同期"].includes(update.type),
@@ -444,6 +458,74 @@ export default async function TodayPage() {
             </div>
           ) : (
             <EmptyState message="未完了のRevenue Taskはありません。" />
+          )}
+        </Section>
+
+        <Section title="Revenue Review Queue">
+          {revenueReviewQueueItems.length > 0 ? (
+            <div className="grid gap-3">
+              {revenueReviewQueueItems.map((task) => (
+                <div
+                  key={task.taskId}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold leading-6 text-zinc-950">
+                        {task.taskTitle}
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600">
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          完了日 {dateFormatter.format(task.completedAt)}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          Priority {numberFormatter.format(task.priority)}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          売上差額 {yenFormatter.format(task.revenueDelta)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        関連記事:{" "}
+                        {task.articleTitle ? (
+                          <Link
+                            href={`/articles/${task.articleId}`}
+                            className="font-semibold text-zinc-700 underline-offset-4 hover:underline"
+                          >
+                            {task.articleTitle}
+                          </Link>
+                        ) : (
+                          "未設定"
+                        )}
+                      </p>
+                      <p className="mt-2 text-xs text-zinc-600">
+                        Result:{" "}
+                        {task.result === null
+                          ? "判定待ち"
+                          : revenueReviewResultLabels[task.result]}{" "}
+                        / Next Action: {revenueReviewNextActionLabels[task.nextAction]}
+                      </p>
+                    </div>
+                    <Link
+                      href="/revenue#revenue-review-queue"
+                      className="inline-flex h-9 w-fit items-center justify-center rounded-md bg-zinc-950 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+                    >
+                      /revenueで確認
+                    </Link>
+                  </div>
+                </div>
+              ))}
+              {hasMoreRevenueReviewQueueItems ? (
+                <Link
+                  href="/revenue#revenue-review-queue"
+                  className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
+                >
+                  すべてのReview Taskを見る
+                </Link>
+              ) : null}
+            </div>
+          ) : (
+            <EmptyState message="今日ReviewするRevenue Taskはありません。" />
           )}
         </Section>
 

@@ -2,9 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getContentGapAnalysis } from "@/features/content-gap/queries";
 import {
-  formatTokyoDateInputValue,
-  normalizeDateInputToTokyoDate,
-} from "@/features/metrics/calculators";
+  buildRevenueReviewEvidence,
+  getRevenueReviewPeriods,
+  getRevenueReviewPhase,
+  getRevenueReviewResult,
+  type RevenueReviewNextAction,
+  type RevenueReviewPhase,
+  type RevenueReviewResult,
+} from "@/features/revenue/review";
+import { getRevenueReviewQueue } from "@/features/revenue/queries";
 import { getTodayData } from "@/features/today/queries";
 import { getTodayTokyoDate, getWeekStartTokyoDate } from "@/features/today/calculators";
 import { dateFormatter, numberFormatter, yenFormatter } from "../articles/utils";
@@ -62,22 +68,52 @@ const revenueTaskTypeLabels = {
   CTA_IMPROVEMENT: "CTA改善",
 } as const;
 
+const revenueReviewPhaseLabels = {
+  MEASURING: "計測中",
+  REVIEW_READY: "Review可能",
+} satisfies Record<RevenueReviewPhase, string>;
+
+const revenueReviewResultLabels = {
+  POSITIVE_SIGNAL: "改善シグナルあり",
+  NO_POSITIVE_SIGNAL: "改善シグナルなし",
+  INSUFFICIENT_DATA: "データ不足",
+} satisfies Record<Exclude<RevenueReviewResult, null>, string>;
+
+const revenueReviewNextActionLabels = {
+  CONTINUE: "継続",
+  RETRY: "再試行",
+  OBSERVE: "観察",
+} satisfies Record<RevenueReviewNextAction, string>;
+
 function formatRate(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
 function formatChangeRate(value: number | null) {
   if (value === null) {
-    return "—";
+    return "算出不可";
   }
 
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${value.toFixed(1)}%`;
 }
 
+function formatReviewResult(result: RevenueReviewResult) {
+  if (result === null) {
+    return "判定待ち";
+  }
+
+  return revenueReviewResultLabels[result];
+}
+
 function formatCurrencyDelta(value: number) {
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${yenFormatter.format(value)}`;
+}
+
+function formatNumberDelta(value: number) {
+  const prefix = value > 0 ? "+" : "";
+  return `${prefix}${numberFormatter.format(value)}`;
 }
 
 function addDays(date: Date, days: number) {
@@ -294,9 +330,15 @@ export default async function RevenueDashboardPage({
   const today = getTodayTokyoDate();
   const weekStart = getWeekStartTokyoDate(today);
   const weekExclusiveTo = addDays(today, 1);
-  const [todayData, contentGapAnalysis, revenueMetrics, paidArticles, revenueTasks] =
-    await Promise.all([
-      getTodayData(),
+  const [
+    todayData,
+    contentGapAnalysis,
+    revenueMetrics,
+    paidArticles,
+    revenueTasks,
+    revenueReviewQueue,
+  ] = await Promise.all([
+      getTodayData({ includeRevenueReviewQueue: false }),
       getContentGapAnalysis(),
       prisma.articleDailyMetric.findMany({
         select: {
@@ -343,6 +385,7 @@ export default async function RevenueDashboardPage({
           createdAt: "asc",
         },
       }),
+      getRevenueReviewQueue(today),
     ]);
 
   const totalRevenue = revenueMetrics.reduce(
@@ -489,55 +532,56 @@ export default async function RevenueDashboardPage({
         task.status === "DONE" && task.completedAt !== null && task.articleId !== null,
     )
     .map((task) => {
-      const completedDate = normalizeDateInputToTokyoDate(
-        formatTokyoDateInputValue(task.completedAt ?? new Date(0)),
-      );
-
-      if (completedDate === null || task.completedAt === null || task.articleId === null) {
+      if (task.completedAt === null || task.articleId === null) {
         return null;
       }
 
-      const beforeFrom = addDays(completedDate, -7);
-      const beforeExclusiveTo = completedDate;
-      const afterFrom = completedDate;
-      const afterExclusiveTo = addDays(completedDate, 7);
-      const beforeRevenue = revenueMetrics
-        .filter(
+      const periods = getRevenueReviewPeriods(task.completedAt);
+
+      if (periods === null) {
+        return null;
+      }
+
+      const evidence = buildRevenueReviewEvidence({
+        beforeMetrics: revenueMetrics.filter(
           (metric) =>
             metric.articleId === task.articleId &&
-            metric.date >= beforeFrom &&
-            metric.date < beforeExclusiveTo,
-        )
-        .reduce((total, metric) => total + metric.revenue, 0);
-      const afterRevenue = revenueMetrics
-        .filter(
+            metric.date >= periods.beforeFrom &&
+            metric.date < periods.beforeExclusiveTo,
+        ),
+        afterMetrics: revenueMetrics.filter(
           (metric) =>
             metric.articleId === task.articleId &&
-            metric.date >= afterFrom &&
-            metric.date < afterExclusiveTo,
-        )
-        .reduce((total, metric) => total + metric.revenue, 0);
-      const delta = afterRevenue - beforeRevenue;
-      const changeRate =
-        beforeRevenue === 0 ? null : (delta / beforeRevenue) * 100;
-      const isFinalized = today >= afterExclusiveTo;
+            metric.date >= periods.afterFrom &&
+            metric.date < periods.afterExclusiveTo,
+        ),
+      });
+      const daysSinceCompletion = Math.max(
+        0,
+        Math.floor(
+          (today.getTime() - periods.completedDate.getTime()) / (24 * 60 * 60 * 1000),
+        ),
+      );
+      const phase = getRevenueReviewPhase(daysSinceCompletion);
+      const result = getRevenueReviewResult({
+        phase,
+        evidence,
+      });
 
       return {
         taskId: task.id,
         title: task.title,
         article: task.article,
         completedAt: task.completedAt,
-        beforePeriod: `${formatTokyoDateInputValue(beforeFrom)}〜${formatTokyoDateInputValue(addDays(beforeExclusiveTo, -1))}`,
-        afterPeriod: `${formatTokyoDateInputValue(afterFrom)}〜${formatTokyoDateInputValue(addDays(afterExclusiveTo, -1))}`,
-        beforeRevenue,
-        afterRevenue,
-        delta,
-        changeRate,
-        isFinalized,
-        elapsedDays: Math.max(
-          0,
-          Math.min(7, Math.floor((today.getTime() - afterFrom.getTime()) / (24 * 60 * 60 * 1000)) + 1),
-        ),
+        beforePeriod: periods.beforePeriod,
+        afterPeriod: periods.afterPeriod,
+        beforeRevenue: evidence.before.revenue,
+        afterRevenue: evidence.after.revenue,
+        delta: evidence.delta.revenue,
+        changeRate: evidence.delta.revenueRate,
+        isFinalized: phase === "REVIEW_READY",
+        elapsedDays: Math.min(7, daysSinceCompletion + 1),
+        result,
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)
@@ -985,6 +1029,140 @@ export default async function RevenueDashboardPage({
             </div>
           ) : (
             <EmptyState message="完了済みかつ関連記事ありのRevenue Taskはまだありません。" />
+          )}
+        </section>
+
+        <section
+          id="revenue-review-queue"
+          className="rounded-lg border border-zinc-200 bg-white shadow-sm"
+        >
+          <SectionHeader
+            title="Revenue Review Queue"
+            description="この判定は改善前後の実績比較に基づく参考情報です。Revenue Task単独の因果関係を証明するものではありません。"
+          />
+          {revenueReviewQueue.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-zinc-200 text-sm">
+                <thead className="bg-zinc-100">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      Task
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      Type
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      Priority
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      関連記事
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      完了日
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      経過
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      PV
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      購入数
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      売上
+                    </th>
+                    <th className="px-5 py-3 text-right font-semibold text-zinc-700">
+                      増減率
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      Phase
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      Result
+                    </th>
+                    <th className="px-5 py-3 text-left font-semibold text-zinc-700">
+                      Next Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {revenueReviewQueue.map((item) => (
+                    <tr key={item.taskId} className="hover:bg-zinc-50">
+                      <td className="min-w-72 px-5 py-4">
+                        <p className="font-medium text-zinc-950">{item.taskTitle}</p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          前: {item.beforePeriod} / 後: {item.afterPeriod}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex h-7 items-center rounded-md bg-zinc-100 px-2 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200">
+                          {revenueTaskTypeLabels[item.taskType]}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {numberFormatter.format(item.priority)}
+                      </td>
+                      <td className="min-w-64 px-5 py-4">
+                        {item.articleTitle ? (
+                          <Link
+                            href={`/articles/${item.articleId}`}
+                            className="font-medium text-zinc-950 underline-offset-4 hover:underline"
+                          >
+                            {item.articleTitle}
+                          </Link>
+                        ) : (
+                          <span className="text-zinc-500">未設定</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
+                        {dateFormatter.format(item.completedAt)}
+                      </td>
+                      <td className="px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {numberFormatter.format(item.daysSinceCompletion)}日
+                      </td>
+                      <td className="min-w-44 px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {numberFormatter.format(item.evidence.before.pv)} →{" "}
+                        {numberFormatter.format(item.evidence.after.pv)}
+                        <span className="ml-2 font-semibold text-zinc-950">
+                          {formatNumberDelta(item.evidence.delta.pv)}
+                        </span>
+                      </td>
+                      <td className="min-w-44 px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {numberFormatter.format(item.evidence.before.purchases)} →{" "}
+                        {numberFormatter.format(item.evidence.after.purchases)}
+                        <span className="ml-2 font-semibold text-zinc-950">
+                          {formatNumberDelta(item.evidence.delta.purchases)}
+                        </span>
+                      </td>
+                      <td className="min-w-52 px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {yenFormatter.format(item.evidence.before.revenue)} →{" "}
+                        {yenFormatter.format(item.evidence.after.revenue)}
+                        <span className="ml-2 font-semibold text-zinc-950">
+                          {formatCurrencyDelta(item.evidence.delta.revenue)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right tabular-nums text-zinc-700">
+                        {formatChangeRate(item.evidence.delta.revenueRate)}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <span className="inline-flex h-7 items-center rounded-md bg-zinc-100 px-2 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200">
+                          {revenueReviewPhaseLabels[item.phase]}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-zinc-700">
+                        {formatReviewResult(item.result)}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 font-semibold text-zinc-950">
+                        {revenueReviewNextActionLabels[item.nextAction]}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState message="Review対象のRevenue Taskはありません。" />
           )}
         </section>
 
