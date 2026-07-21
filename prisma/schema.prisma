@@ -23,6 +23,17 @@ enum ActorStatus {
   INACTIVE
 }
 
+enum RevenueTaskStatus {
+  TODO
+  DOING
+  DONE
+}
+
+enum RevenueTaskType {
+  GENERAL
+  CTA_IMPROVEMENT
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -44,6 +55,7 @@ model Article {
   freeArticleDrafts    FreeArticleDraft[]
   freeArticleIdeas     FreeArticleIdea[]
   contentGaps          ContentGap[]
+  revenueTasks         RevenueTask[]
 }
 
 model ArticleDailyMetric {
@@ -312,4 +324,17 @@ model RolePermission {
   @@unique([roleId, permissionId])
   @@index([roleId])
   @@index([permissionId])
+}
+
+model RevenueTask {
+  id          String            @id @default(cuid())
+  title       String
+  type        RevenueTaskType   @default(GENERAL)
+  status      RevenueTaskStatus @default(TODO)
+  priority    Int
+  articleId   String?
+  article     Article?          @relation(fields: [articleId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  completedAt DateTime?
 }

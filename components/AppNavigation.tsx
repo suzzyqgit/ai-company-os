@@ -28,6 +28,7 @@ const navigationGroups: NavGroup[] = [
   {
     title: "分析",
     items: [
+      { label: "Revenue", href: "/revenue" },
       { label: "AI改善", href: "/ai-improvements" },
       { label: "Content Gap", href: "/content-gap" },
       { label: "Analytics", href: "/analytics" },
