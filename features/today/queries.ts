@@ -3,6 +3,10 @@ import { getTodayAiImprovements } from "@/features/ai-improvements/queries";
 import { getContentGapAnalysis } from "@/features/content-gap/queries";
 import { getRevenueReviewQueue } from "@/features/revenue/queries";
 import {
+  buildRevenueReviewRecommendation,
+  deduplicateRevenueReviewRecommendations,
+} from "@/features/revenue/recommendations";
+import {
   compareTodayRevenueReviewQueueItems,
   TODAY_REVIEW_READY_FROM_DAYS,
   TODAY_REVIEW_READY_TO_DAYS,
@@ -27,6 +31,7 @@ import {
   pickTodayFreeArticlePlan,
   pickTodayImprovementArticle,
   todayPurchaseGoal,
+  toTodayRevenueReviewRecommendationItem,
   type TodayFreeArticleImprovementCandidate,
   type TodayPrePublishFreeArticle,
   type TodayRecentUpdate,
@@ -229,6 +234,14 @@ export async function getTodayData({
   const revenueReviewQueue = includeRevenueReviewQueue
     ? await getRevenueReviewQueue(today)
     : [];
+  const revenueReviewRecommendations = deduplicateRevenueReviewRecommendations(
+    revenueReviewQueue
+      .map(buildRevenueReviewRecommendation)
+      .filter((recommendation) => recommendation !== null),
+  );
+  const revenueReviewRecommendationItems = revenueReviewRecommendations
+    .slice(0, 3)
+    .map(toTodayRevenueReviewRecommendationItem);
   const todayRevenueReviewCandidates = revenueReviewQueue
     .filter(
       (item) =>
@@ -460,6 +473,13 @@ export async function getTodayData({
     recentUpdates,
     revenueActionQueueItems,
     hasMoreRevenueActionQueueItems: revenueActionQueueCandidates.length > 5,
+    revenueReviewRecommendationItems,
+    hasMoreRevenueReviewRecommendationItems:
+      revenueReviewRecommendations.length > 3,
+    revenueReviewRecommendationExtraCount: Math.max(
+      0,
+      revenueReviewRecommendations.length - 3,
+    ),
     revenueReviewQueueItems,
     hasMoreRevenueReviewQueueItems: todayRevenueReviewCandidates.length > 3,
   };

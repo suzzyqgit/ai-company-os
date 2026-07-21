@@ -52,6 +52,15 @@ const revenueReviewNextActionLabels = {
   OBSERVE: "観察",
 } as const;
 
+const revenueReviewRecommendationLabels = {
+  CONTINUE_WINNER: "成果施策を継続",
+  RETRY_CTA: "CTA・購入導線を改善",
+  RETRY_OFFER: "価格・オファーを改善",
+  RETRY_TRAFFIC: "流入導線を改善",
+  COLLECT_MORE_DATA: "追加データを計測",
+  NO_ACTION: "対応不要",
+} as const;
+
 function getPriorityClass(priority: string) {
   if (priority === "高") {
     return "bg-red-100 text-red-700 ring-red-200";
@@ -77,6 +86,9 @@ export default async function TodayPage() {
     recentUpdates,
     revenueActionQueueItems,
     hasMoreRevenueActionQueueItems,
+    revenueReviewRecommendationItems,
+    hasMoreRevenueReviewRecommendationItems,
+    revenueReviewRecommendationExtraCount,
     revenueReviewQueueItems,
     hasMoreRevenueReviewQueueItems,
   } = await getTodayData();
@@ -458,6 +470,78 @@ export default async function TodayPage() {
             </div>
           ) : (
             <EmptyState message="未完了のRevenue Taskはありません。" />
+          )}
+        </Section>
+
+        <Section title="売上改善の次アクション">
+          {revenueReviewRecommendationItems.length > 0 ? (
+            <div className="grid gap-3">
+              {revenueReviewRecommendationItems.map((recommendation) => (
+                <div
+                  key={`${recommendation.articleId}-${recommendation.recommendationType}-${recommendation.taskId}`}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500">
+                        {revenueReviewRecommendationLabels[
+                          recommendation.recommendationType
+                        ]}
+                      </p>
+                      <h3 className="mt-1 text-sm font-bold leading-6 text-zinc-950">
+                        {recommendation.articleTitle ? (
+                          <Link
+                            href={`/articles/${recommendation.articleId}`}
+                            className="underline-offset-4 hover:underline"
+                          >
+                            {recommendation.articleTitle}
+                          </Link>
+                        ) : (
+                          "対象記事"
+                        )}
+                      </h3>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        元Task: {recommendation.taskTitle}
+                      </p>
+                    </div>
+                    <span className="w-fit rounded-md bg-white px-2 py-1 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200">
+                      Priority {numberFormatter.format(recommendation.priority)}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600">
+                    <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                      売上差分 {yenFormatter.format(recommendation.revenueDelta)}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                      PV差分 {numberFormatter.format(recommendation.pvDelta)}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                      購入数差分{" "}
+                      {numberFormatter.format(recommendation.purchasesDelta)}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-xs leading-5 text-zinc-700">
+                    <div>
+                      <dt className="font-semibold text-zinc-950">理由</dt>
+                      <dd>{recommendation.reason}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-zinc-950">推奨アクション</dt>
+                      <dd>{recommendation.recommendedAction}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ))}
+              {hasMoreRevenueReviewRecommendationItems ? (
+                <p className="text-sm text-zinc-500">
+                  ほかに
+                  {numberFormatter.format(revenueReviewRecommendationExtraCount)}
+                  件のRecommendationがあります。
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <EmptyState message="現在、レビュー結果に基づく追加改善はありません。" />
           )}
         </Section>
 

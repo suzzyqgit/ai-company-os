@@ -5,6 +5,10 @@ import type { FreeArticleEvaluation } from "@/features/free-articles/evaluation"
 import type { FreeArticleImprovementSuggestion } from "@/features/free-articles/improvements";
 import type { FreeArticlePipelineStatus } from "@/features/free-articles/status";
 import type {
+  RevenueReviewRecommendationType,
+  RevenueReviewRecommendation,
+} from "@/features/revenue/recommendations";
+import type {
   RevenueReviewNextAction,
   RevenueReviewResult,
 } from "@/features/revenue/review";
@@ -105,6 +109,40 @@ export type TodayRevenueReviewQueueItem = {
   result: RevenueReviewResult;
   nextAction: RevenueReviewNextAction;
 };
+
+export type TodayRevenueReviewRecommendationItem = {
+  taskId: string;
+  taskTitle: string;
+  articleId: string;
+  articleTitle: string | null;
+  recommendationType: RevenueReviewRecommendationType;
+  priority: number;
+  reason: string;
+  recommendedAction: string;
+  revenueDelta: number;
+  pvDelta: number;
+  purchasesDelta: number;
+  completedAt: Date;
+};
+
+export function toTodayRevenueReviewRecommendationItem(
+  recommendation: RevenueReviewRecommendation,
+): TodayRevenueReviewRecommendationItem {
+  return {
+    taskId: recommendation.taskId,
+    taskTitle: recommendation.taskTitle,
+    articleId: recommendation.articleId,
+    articleTitle: recommendation.articleTitle,
+    recommendationType: recommendation.recommendationType,
+    priority: recommendation.priority,
+    reason: recommendation.reason,
+    recommendedAction: recommendation.recommendedAction,
+    revenueDelta: recommendation.revenueDelta,
+    pvDelta: recommendation.pvDelta,
+    purchasesDelta: recommendation.purchasesDelta,
+    completedAt: recommendation.completedAt,
+  };
+}
 
 export const todayPurchaseGoal = 5;
 export const todayChecklistDefinitions = [
