@@ -78,6 +78,18 @@ export type TodayRecentUpdate = {
   href: string;
 };
 
+export type TodayRevenueActionQueueItem = {
+  id: string;
+  title: string;
+  status: "TODO" | "DOING";
+  priority: number;
+  createdAt: Date;
+  article: {
+    id: string;
+    title: string;
+  } | null;
+};
+
 export const todayPurchaseGoal = 5;
 export const todayChecklistDefinitions = [
   { key: "import-ocr", label: "OCRを取り込む", href: "/imports/note-access" },

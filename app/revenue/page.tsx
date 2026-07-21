@@ -30,10 +30,19 @@ type RevenueRecommendation = {
   key: string;
   title: string;
   targetTitle: string;
+  articleId: string;
   href: string;
   priorityScore: number;
   reason: string;
   evidenceItems: string[];
+};
+
+type RevenueDashboardPageProps = {
+  searchParams: Promise<{
+    taskTitle?: string;
+    taskPriority?: string;
+    taskArticleId?: string;
+  }>;
 };
 
 const revenueTaskStatusOrder = {
@@ -187,11 +196,14 @@ function RecommendationCard({
 }: {
   recommendation: RevenueRecommendation;
 }) {
+  const taskParams = new URLSearchParams({
+    taskTitle: `${recommendation.title}: ${recommendation.targetTitle}`,
+    taskPriority: String(recommendation.priorityScore),
+    taskArticleId: recommendation.articleId,
+  });
+
   return (
-    <Link
-      href={recommendation.href}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
-    >
+    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -214,7 +226,21 @@ function RecommendationCard({
           <li key={item}>{item}</li>
         ))}
       </ul>
-    </Link>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={recommendation.href}
+          className="inline-flex h-9 items-center justify-center rounded-md bg-white px-3 text-xs font-semibold text-zinc-800 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
+        >
+          対象を見る
+        </Link>
+        <Link
+          href={`/revenue?${taskParams.toString()}#revenue-task-form`}
+          className="inline-flex h-9 items-center justify-center rounded-md bg-zinc-950 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+        >
+          Taskにする
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -251,7 +277,20 @@ function EmptyState({ message }: { message: string }) {
   return <p className="px-5 py-8 text-sm text-zinc-500">{message}</p>;
 }
 
-export default async function RevenueDashboardPage() {
+function parseInitialTaskPriority(value: string | undefined) {
+  const priority = Number(value);
+
+  if (!Number.isInteger(priority) || priority < 0 || priority > 100) {
+    return 50;
+  }
+
+  return priority;
+}
+
+export default async function RevenueDashboardPage({
+  searchParams,
+}: RevenueDashboardPageProps) {
+  const resolvedSearchParams = await searchParams;
   const today = getTodayTokyoDate();
   const weekStart = getWeekStartTokyoDate(today);
   const weekExclusiveTo = addDays(today, 1);
@@ -521,6 +560,7 @@ export default async function RevenueDashboardPage() {
       key: `improvement-${article.id}`,
       title: "購入率改善を確認",
       targetTitle: article.title,
+      articleId: article.id,
       href: `/articles/${article.id}`,
       priorityScore: article.priorityScore,
       reason:
@@ -533,6 +573,7 @@ export default async function RevenueDashboardPage() {
       key: `resale-${article.id}`,
       title: "再販売導線を確認",
       targetTitle: article.title,
+      articleId: article.id,
       href: `/articles/${article.id}`,
       priorityScore: article.priorityScore,
       reason:
@@ -546,6 +587,7 @@ export default async function RevenueDashboardPage() {
       key: `free-article-${gap.articleId}`,
       title: "無料記事導線を補強",
       targetTitle: gap.title,
+      articleId: gap.articleId,
       href: `/free-article-generator?destinationArticleId=${gap.articleId}`,
       priorityScore: gap.priorityScore,
       reason:
@@ -611,6 +653,14 @@ export default async function RevenueDashboardPage() {
       note: `7日経過済みTask ${numberFormatter.format(finalizedSevenDayRows.length)}件の差額合計`,
     },
   ];
+  const initialTaskTitle = resolvedSearchParams.taskTitle?.trim() ?? "";
+  const initialTaskPriority = parseInitialTaskPriority(
+    resolvedSearchParams.taskPriority,
+  );
+  const initialTaskArticleId =
+    paidArticles.some((article) => article.id === resolvedSearchParams.taskArticleId)
+      ? resolvedSearchParams.taskArticleId
+      : "";
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8">
@@ -676,6 +726,7 @@ export default async function RevenueDashboardPage() {
             description="利益改善タスクをTodo / Doing / Doneで管理します。"
           />
           <form
+            id="revenue-task-form"
             action={createRevenueTaskAction}
             className="grid gap-4 border-b border-zinc-200 p-5 lg:grid-cols-[1fr_140px_260px_auto]"
           >
@@ -684,6 +735,7 @@ export default async function RevenueDashboardPage() {
               <input
                 name="title"
                 required
+                defaultValue={initialTaskTitle}
                 className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-500"
                 placeholder="例: CTAを見直す"
               />
@@ -696,7 +748,7 @@ export default async function RevenueDashboardPage() {
                 type="number"
                 min="0"
                 max="100"
-                defaultValue="50"
+                defaultValue={initialTaskPriority}
                 className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-500"
               />
             </label>
@@ -719,7 +771,7 @@ export default async function RevenueDashboardPage() {
               <select
                 name="articleId"
                 className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-500"
-                defaultValue=""
+                defaultValue={initialTaskArticleId}
               >
                 <option value="">未設定</option>
                 {paidArticles.map((article) => (

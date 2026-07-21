@@ -32,6 +32,7 @@ function isRevenueTaskType(value: string): value is RevenueTaskType {
 
 function revalidateRevenue() {
   revalidatePath("/revenue");
+  revalidatePath("/today");
 }
 
 export async function createRevenueTaskAction(formData: FormData) {

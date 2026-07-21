@@ -63,6 +63,8 @@ export default async function TodayPage() {
     prePublishArticles,
     todayKpis,
     recentUpdates,
+    revenueActionQueueItems,
+    hasMoreRevenueActionQueueItems,
   } = await getTodayData();
   const importUpdates = recentUpdates.filter((update) =>
     ["OCR", "CSV", "公開記事同期"].includes(update.type),
@@ -381,6 +383,67 @@ export default async function TodayPage() {
             </div>
           ) : (
             <EmptyState message="公開前の記事はありません。" />
+          )}
+        </Section>
+
+        <Section title="Revenue Action Queue">
+          {revenueActionQueueItems.length > 0 ? (
+            <div className="grid gap-3">
+              {revenueActionQueueItems.map((task) => (
+                <div
+                  key={task.id}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold leading-6 text-zinc-950">
+                        {task.title}
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-600">
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          {task.status === "DOING" ? "Doing" : "Todo"}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          Priority {numberFormatter.format(task.priority)}
+                        </span>
+                        <span className="rounded-md bg-white px-2 py-1 ring-1 ring-zinc-200">
+                          作成日 {dateFormatter.format(task.createdAt)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        関連記事:{" "}
+                        {task.article ? (
+                          <Link
+                            href={`/articles/${task.article.id}`}
+                            className="font-semibold text-zinc-700 underline-offset-4 hover:underline"
+                          >
+                            {task.article.title}
+                          </Link>
+                        ) : (
+                          "未設定"
+                        )}
+                      </p>
+                    </div>
+                    <Link
+                      href="/revenue#revenue-task-form"
+                      className="inline-flex h-9 w-fit items-center justify-center rounded-md bg-zinc-950 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+                    >
+                      /revenueで操作
+                    </Link>
+                  </div>
+                </div>
+              ))}
+              {hasMoreRevenueActionQueueItems ? (
+                <Link
+                  href="/revenue"
+                  className="inline-flex h-10 w-fit items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
+                >
+                  すべてのRevenue Taskを見る
+                </Link>
+              ) : null}
+            </div>
+          ) : (
+            <EmptyState message="未完了のRevenue Taskはありません。" />
           )}
         </Section>
 

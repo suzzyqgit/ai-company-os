@@ -24,6 +24,7 @@ import {
   type TodayFreeArticleImprovementCandidate,
   type TodayPrePublishFreeArticle,
   type TodayRecentUpdate,
+  type TodayRevenueActionQueueItem,
 } from "./calculators";
 
 function toRecentUpdate(update: TodayRecentUpdate) {
@@ -46,6 +47,7 @@ export async function getTodayData() {
     publishedFreeDrafts,
     recentAiRuns,
     recentSyncedArticles,
+    revenueActionQueueCandidates,
   ] = await Promise.all([
     prisma.todayTaskCompletion.findMany({
       where: {
@@ -173,7 +175,46 @@ export async function getTodayData() {
         updatedAt: true,
       },
     }),
+    prisma.revenueTask.findMany({
+      where: {
+        status: {
+          in: ["TODO", "DOING"],
+        },
+      },
+      orderBy: [
+        { status: "asc" },
+        { priority: "desc" },
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        article: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    }),
   ]);
+  const revenueActionQueueItems = revenueActionQueueCandidates
+    .slice(0, 5)
+    .map(
+      (task): TodayRevenueActionQueueItem => ({
+        id: task.id,
+        title: task.title,
+        status: task.status === "DOING" ? "DOING" : "TODO",
+        priority: task.priority,
+        createdAt: task.createdAt,
+        article: task.article,
+      }),
+    );
   const completedKeys = new Set(completions.map((completion) => completion.taskKey));
   const prePublishArticles = prePublishDrafts
     .map((draft) => ({
@@ -380,5 +421,7 @@ export async function getTodayData() {
     prePublishArticles,
     todayKpis,
     recentUpdates,
+    revenueActionQueueItems,
+    hasMoreRevenueActionQueueItems: revenueActionQueueCandidates.length > 5,
   };
 }
