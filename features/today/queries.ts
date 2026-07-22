@@ -6,6 +6,7 @@ import {
   buildRevenueReviewRecommendation,
   deduplicateRevenueReviewRecommendations,
 } from "@/features/revenue/recommendations";
+import { buildImprovementIdeas } from "@/features/improvement-ideas/recommendations";
 import {
   compareTodayRevenueReviewQueueItems,
   TODAY_REVIEW_READY_FROM_DAYS,
@@ -31,7 +32,7 @@ import {
   pickTodayFreeArticlePlan,
   pickTodayImprovementArticle,
   todayPurchaseGoal,
-  toTodayRevenueReviewRecommendationItem,
+  toTodayImprovementIdeaItem,
   type TodayFreeArticleImprovementCandidate,
   type TodayPrePublishFreeArticle,
   type TodayRecentUpdate,
@@ -239,9 +240,10 @@ export async function getTodayData({
       .map(buildRevenueReviewRecommendation)
       .filter((recommendation) => recommendation !== null),
   );
-  const revenueReviewRecommendationItems = revenueReviewRecommendations
+  const improvementIdeas = buildImprovementIdeas(revenueReviewRecommendations);
+  const improvementIdeaItems = improvementIdeas
     .slice(0, 3)
-    .map(toTodayRevenueReviewRecommendationItem);
+    .map(toTodayImprovementIdeaItem);
   const todayRevenueReviewCandidates = revenueReviewQueue
     .filter(
       (item) =>
@@ -473,13 +475,9 @@ export async function getTodayData({
     recentUpdates,
     revenueActionQueueItems,
     hasMoreRevenueActionQueueItems: revenueActionQueueCandidates.length > 5,
-    revenueReviewRecommendationItems,
-    hasMoreRevenueReviewRecommendationItems:
-      revenueReviewRecommendations.length > 3,
-    revenueReviewRecommendationExtraCount: Math.max(
-      0,
-      revenueReviewRecommendations.length - 3,
-    ),
+    improvementIdeaItems,
+    hasMoreImprovementIdeaItems: improvementIdeas.length > 3,
+    improvementIdeaExtraCount: Math.max(0, improvementIdeas.length - 3),
     revenueReviewQueueItems,
     hasMoreRevenueReviewQueueItems: todayRevenueReviewCandidates.length > 3,
   };

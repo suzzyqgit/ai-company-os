@@ -4,10 +4,7 @@ import type { RuleBasedImprovement } from "@/features/ai-improvements/rules";
 import type { FreeArticleEvaluation } from "@/features/free-articles/evaluation";
 import type { FreeArticleImprovementSuggestion } from "@/features/free-articles/improvements";
 import type { FreeArticlePipelineStatus } from "@/features/free-articles/status";
-import type {
-  RevenueReviewRecommendationType,
-  RevenueReviewRecommendation,
-} from "@/features/revenue/recommendations";
+import type { ImprovementIdea } from "@/features/improvement-ideas/recommendations";
 import type {
   RevenueReviewNextAction,
   RevenueReviewResult,
@@ -110,12 +107,13 @@ export type TodayRevenueReviewQueueItem = {
   nextAction: RevenueReviewNextAction;
 };
 
-export type TodayRevenueReviewRecommendationItem = {
+export type TodayImprovementIdeaItem = {
+  id: string;
   taskId: string;
   taskTitle: string;
   articleId: string;
   articleTitle: string | null;
-  recommendationType: RevenueReviewRecommendationType;
+  title: string;
   priority: number;
   reason: string;
   recommendedAction: string;
@@ -125,22 +123,23 @@ export type TodayRevenueReviewRecommendationItem = {
   completedAt: Date;
 };
 
-export function toTodayRevenueReviewRecommendationItem(
-  recommendation: RevenueReviewRecommendation,
-): TodayRevenueReviewRecommendationItem {
+export function toTodayImprovementIdeaItem(
+  idea: ImprovementIdea,
+): TodayImprovementIdeaItem {
   return {
-    taskId: recommendation.taskId,
-    taskTitle: recommendation.taskTitle,
-    articleId: recommendation.articleId,
-    articleTitle: recommendation.articleTitle,
-    recommendationType: recommendation.recommendationType,
-    priority: recommendation.priority,
-    reason: recommendation.reason,
-    recommendedAction: recommendation.recommendedAction,
-    revenueDelta: recommendation.revenueDelta,
-    pvDelta: recommendation.pvDelta,
-    purchasesDelta: recommendation.purchasesDelta,
-    completedAt: recommendation.completedAt,
+    id: idea.id,
+    taskId: idea.taskId,
+    taskTitle: idea.taskTitle,
+    articleId: idea.articleId,
+    articleTitle: idea.articleTitle,
+    title: idea.title,
+    priority: idea.priority,
+    reason: idea.reason,
+    recommendedAction: idea.recommendedAction,
+    revenueDelta: idea.revenueDelta,
+    pvDelta: idea.pvDelta,
+    purchasesDelta: idea.purchasesDelta,
+    completedAt: idea.completedAt,
   };
 }
 
