@@ -34,6 +34,13 @@ enum RevenueTaskType {
   CTA_IMPROVEMENT
 }
 
+enum ImportApprovalStatus {
+  PENDING
+  REVIEW_REQUIRED
+  APPROVED
+  REJECTED
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -167,6 +174,7 @@ model ImportRun {
 
   sources   ImportSource[]
   snapshots Snapshot[]
+  canonicalSalesRecords CanonicalSalesRecord[]
 
   @@index([status])
   @@index([importedAt])
@@ -186,10 +194,49 @@ model ImportSource {
 
   importRun ImportRun  @relation(fields: [importRunId], references: [id], onDelete: Cascade)
   snapshots Snapshot[]
+  canonicalSalesRecords CanonicalSalesRecord[]
 
   @@index([importRunId])
   @@index([sourceHash])
   @@index([sourceType])
+}
+
+model CanonicalSalesRecord {
+  id             String               @id @default(cuid())
+  importRunId    String
+  importSourceId String
+  businessKey    String
+  sourceHash     String
+  schemaVersion  String
+  parserVersion  String
+  saleDate       DateTime
+  productName    String
+  quantity       Int
+  grossAmount    Int
+  netAmount      Int?
+  currency       String
+  platform       String
+  source         String
+  confidence     Float
+  approvalStatus ImportApprovalStatus @default(PENDING)
+  validationJson String
+  importedAt     DateTime
+  importedBy     String
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewReason   String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  importRun    ImportRun    @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  importSource ImportSource @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
+
+  @@unique([importSourceId, businessKey, sourceHash])
+  @@index([importRunId])
+  @@index([importSourceId])
+  @@index([approvalStatus])
+  @@index([businessKey])
+  @@index([sourceHash])
 }
 
 model Snapshot {
