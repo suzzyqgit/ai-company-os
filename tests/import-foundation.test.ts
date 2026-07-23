@@ -7,6 +7,7 @@ import test from "node:test";
 import { PrismaClient } from "@prisma/client";
 import {
   buildPhase1AImportOutput,
+  buildNoteAccessSnapshotImportOutput,
   buildSourceMetadata,
   getSnapshotFeed,
   importOutputSchemaVersion,
@@ -24,11 +25,11 @@ let prisma: PrismaClient;
 let cleanupDatabase: () => Promise<void>;
 
 async function createPrismaClient() {
-  const directory = await mkdtemp("/private/tmp/import-foundation-");
+  const directory = await mkdtemp(join(process.env.TMPDIR ?? "/tmp", "import-foundation-"));
   const databaseUrl = `file:${join(directory, "test.db")}`;
 
   await execFileAsync("npx", ["prisma", "db", "push", "--skip-generate"], {
-    cwd: "/Users/kaiware/Documents/ai-company-os",
+    cwd: process.cwd(),
     env: {
       ...process.env,
       DATABASE_URL: databaseUrl,
@@ -255,6 +256,19 @@ test("persists failed runs for audit without approved snapshots", async () => {
   assert.equal(run?.snapshots.length, 0);
 });
 
+test("rejects an approved snapshot when the pipeline validation failed", () => {
+  const output = createImportOutput({
+    validation: {
+      ok: false,
+      issues: ["period_unresolved"],
+    },
+  });
+  const result = validateImportOutput(output);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.issues.includes("snapshot_0_failed_validation_must_not_be_approved"));
+});
+
 test("keeps null and unresolved snapshot values instead of coercing to zero", async () => {
   const output = createImportOutput({
     importRun: {
@@ -445,6 +459,64 @@ test("Phase 1A output connects classification results to the common contract", (
   assert.equal(result.ok, true);
   assert.equal(output.snapshots.length, 1);
   assert.equal(output.snapshots[0].status, "review_required");
+});
+
+test("Phase 1B persists a validated period snapshot as review required with traceability", async () => {
+  const output = buildNoteAccessSnapshotImportOutput({
+    inspection,
+    ocrText: `
+      note アクセス状況
+      選択中: 週
+      2026年7月9日 - 2026年7月15日
+      492 0 10
+      全体ビュー コメント スキ
+    `,
+    importedAt: "2026-07-23T12:00:00.000Z",
+    importedBy: "test-runner",
+    pipelineVersion: "note-import-pipeline-phase1b-v1",
+  });
+  const result = await persistImportOutput({ prisma, output });
+  const run = await prisma.importRun.findUnique({
+    where: { id: result.importRunId },
+    include: { sources: true, snapshots: true },
+  });
+
+  assert.equal(result.status, "review_required");
+  assert.equal(run?.sources.length, 1);
+  assert.equal(run?.snapshots.length, 1);
+  assert.equal(run?.snapshots[0].snapshotType, "WEEKLY");
+  assert.equal(run?.snapshots[0].status, "review_required");
+  assert.equal(run?.snapshots[0].pv, 492);
+  assert.equal(run?.snapshots[0].comments, 0);
+  assert.equal(run?.snapshots[0].likes, 10);
+  assert.equal(run?.snapshots[0].importSourceId, run?.sources[0].id);
+});
+
+test("Phase 1B persists an article-list audit run but refuses a Snapshot", async () => {
+  const output = buildNoteAccessSnapshotImportOutput({
+    inspection: {
+      ...inspection,
+      sourceHash: "d".repeat(64),
+      fileName: "article-list.png",
+    },
+    ocrText: `
+      記事一覧
+      タイトル 価格 購入数 購入率 更新日
+      匿名記事 ¥980 2 1.2% 2026-07-15
+    `,
+    importedAt: "2026-07-23T12:00:00.000Z",
+    importedBy: "test-runner",
+    pipelineVersion: "note-import-pipeline-phase1b-v1",
+  });
+  const result = await persistImportOutput({ prisma, output });
+  const run = await prisma.importRun.findUnique({
+    where: { id: result.importRunId },
+    include: { sources: true, snapshots: true },
+  });
+
+  assert.equal(result.status, "failed");
+  assert.equal(run?.sources[0].sourceType, "note_article_list");
+  assert.equal(run?.snapshots.length, 0);
 });
 
 test("foundation fixtures do not retain personal identifiers", () => {

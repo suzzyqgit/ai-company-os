@@ -295,6 +295,14 @@ export function validateImportOutput(value: unknown): ValidatorResult {
         issues.push(`snapshot_${index}_validation_status_invalid`);
       }
 
+      if (
+        snapshot.status === "approved" &&
+        (snapshot.validationStatus === "failed" ||
+          (isRecord(value.validation) && value.validation.ok === false))
+      ) {
+        issues.push(`snapshot_${index}_failed_validation_must_not_be_approved`);
+      }
+
       for (const key of ["periodStart", "periodEnd", "observedAt"]) {
         if (!isNullableString(snapshot[key])) {
           issues.push(`snapshot_${index}_${key}_must_be_string_or_null`);
@@ -309,6 +317,10 @@ export function validateImportOutput(value: unknown): ValidatorResult {
 
       validateJsonRecord(snapshot.data, `snapshot_${index}_data`, issues);
       validateJsonRecord(snapshot.evidence, `snapshot_${index}_evidence`, issues);
+
+      if (isRecord(snapshot.evidence) && Object.keys(snapshot.evidence).length === 0) {
+        issues.push(`snapshot_${index}_evidence_required`);
+      }
     });
   }
 

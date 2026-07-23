@@ -112,10 +112,14 @@ export async function persistImportOutputInTransaction({
   const snapshotIds: string[] = [];
 
   for (const snapshot of output.snapshots) {
-    const safeSnapshot = duplicateApprovedSnapshotCount > 0 && snapshot.status === "approved"
+    const mustPreventApproval =
+      output.validation.ok === false ||
+      snapshot.validationStatus === "failed" ||
+      duplicateApprovedSnapshotCount > 0;
+    const safeSnapshot = mustPreventApproval && snapshot.status === "approved"
       ? {
           ...snapshot,
-          status: "review_required" as const,
+          status: output.validation.ok ? "review_required" as const : "rejected" as const,
         } satisfies ImportOutputSnapshot
       : snapshot;
     const created = await transaction.snapshot.create({

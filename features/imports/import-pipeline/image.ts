@@ -87,6 +87,14 @@ function parseNumber(value: string) {
 
 function findActiveTab(text: string): SnapshotExtraction["activeTab"] {
   const normalized = normalizeOcrText(text);
+  const explicitTab = normalized.match(
+    /(?:選択中|active(?:\s+tab)?)\s*[:：]?\s*(全期間|年|月|週)/i,
+  )?.[1] as SnapshotExtraction["activeTab"] | undefined;
+
+  if (explicitTab) {
+    return explicitTab;
+  }
+
   const { periodStart, periodEnd } = extractPeriod(normalized);
 
   if (periodStart && periodEnd) {
@@ -124,6 +132,31 @@ function findActiveTab(text: string): SnapshotExtraction["activeTab"] {
   }
 
   return null;
+}
+
+function inclusivePeriodDays(periodStart: string, periodEnd: string) {
+  const start = Date.parse(`${periodStart}T00:00:00.000Z`);
+  const end = Date.parse(`${periodEnd}T00:00:00.000Z`);
+
+  if (Number.isNaN(start) || Number.isNaN(end)) {
+    return null;
+  }
+
+  return Math.round((end - start) / 86_400_000) + 1;
+}
+
+function periodMatchesSnapshotType(
+  snapshotType: Exclude<SnapshotType, "ALL_TIME">,
+  days: number,
+) {
+  switch (snapshotType) {
+    case "YEARLY":
+      return days >= 300 && days <= 370;
+    case "MONTHLY":
+      return days >= 20 && days <= 35;
+    case "WEEKLY":
+      return days >= 1 && days <= 8;
+  }
 }
 
 function toIsoDate(year: string, month: string, day: string) {
@@ -276,6 +309,8 @@ export function validateSnapshot(snapshot: NormalizedSnapshot | null): Validatio
 
   if (!snapshot.sourceHash) {
     issues.push("source_hash_missing");
+  } else if (!/^[a-f0-9]{64}$/i.test(snapshot.sourceHash)) {
+    issues.push("source_hash_invalid");
   }
 
   if (snapshot.confidence < 0 || snapshot.confidence > 1) {
@@ -286,6 +321,16 @@ export function validateSnapshot(snapshot: NormalizedSnapshot | null): Validatio
     issues.push("period_unresolved");
   } else if (snapshot.periodStart > snapshot.periodEnd) {
     issues.push("period_start_after_end");
+  } else {
+    const days = inclusivePeriodDays(snapshot.periodStart, snapshot.periodEnd);
+
+    if (
+      days === null ||
+      (snapshot.snapshotType !== "ALL_TIME" &&
+        !periodMatchesSnapshotType(snapshot.snapshotType, days))
+    ) {
+      issues.push("snapshot_type_period_range_mismatch");
+    }
   }
 
   if (snapshot.snapshotType === "ALL_TIME") {
@@ -303,6 +348,14 @@ export function validateSnapshot(snapshot: NormalizedSnapshot | null): Validatio
 
   if (expectedTab && snapshot.activeTab !== expectedTab) {
     issues.push("snapshot_type_period_tab_mismatch");
+  }
+
+  if (
+    snapshot.evidence.length === 0 ||
+    !snapshot.evidence.some((item) => item.startsWith("active_tab:")) ||
+    !snapshot.evidence.some((item) => item.startsWith("period:"))
+  ) {
+    issues.push("required_evidence_missing");
   }
 
   for (const [field, value] of [

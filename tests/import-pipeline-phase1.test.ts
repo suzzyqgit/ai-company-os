@@ -149,6 +149,40 @@ test("does not coerce unreadable OCR values to zero", () => {
   assert.equal(result.validation.ok, false);
 });
 
+test("detects an explicit selected tab that contradicts the displayed period", () => {
+  const result = runSnapshotPipeline(`
+    note アクセス状況
+    選択中: 月
+    2026年7月9日 - 2026年7月15日
+    492 0 10
+    全体ビュー コメント スキ
+  `);
+
+  assert.equal(result.classification.snapshotType, "MONTHLY");
+  assert.equal(result.extraction.activeTab, "月");
+  assert.equal(result.validation.ok, false);
+  assert.ok(result.validation.issues.includes("snapshot_type_period_range_mismatch"));
+  assert.equal(result.persistDecision.canPersistSnapshot, false);
+});
+
+test("requires extraction evidence before a snapshot can be persisted", () => {
+  const result = runSnapshotPipeline(`
+    note アクセス状況
+    週
+    2026年7月9日 - 2026年7月15日
+    492 0 10
+    全体ビュー コメント スキ
+  `);
+  const normalized = result.normalized && {
+    ...result.normalized,
+    evidence: [],
+  };
+  const validation = validateSnapshot(normalized);
+
+  assert.equal(validation.ok, false);
+  assert.ok(validation.issues.includes("required_evidence_missing"));
+});
+
 test("classifies UTF-8 BOM note sales history CSV without extracting transactions", () => {
   const csv = [
     "\uFEFF決済/返金日時,購入者名,決済種別,決済方法,コンテンツ種別,コンテンツ名,販売額,消費税率,税抜販売額,消費税額,ポイント利用,取引ID,発行事業者,適格事業者登録番号",
