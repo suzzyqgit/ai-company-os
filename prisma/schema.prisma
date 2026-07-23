@@ -52,6 +52,7 @@ model Article {
   aiAnalysisRuns       AiAnalysisRun[]
   noteSaleTransactions NoteSaleTransaction[]
   accessImportItems    ArticleAccessImportItem[]
+  snapshots            Snapshot[]
   freeArticleDrafts    FreeArticleDraft[]
   freeArticleIdeas     FreeArticleIdea[]
   contentGaps          ContentGap[]
@@ -149,6 +150,77 @@ model ArticleAccessImportItem {
   @@index([runId])
   @@index([articleId])
   @@index([createdAt])
+}
+
+model ImportRun {
+  id              String    @id @default(cuid())
+  status          String
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  importedAt      DateTime
+  importedBy      String
+  pipelineVersion String
+  summaryJson     String?
+  error           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sources   ImportSource[]
+  snapshots Snapshot[]
+
+  @@index([status])
+  @@index([importedAt])
+  @@index([importedBy])
+}
+
+model ImportSource {
+  id             String   @id @default(cuid())
+  importRunId    String
+  sourceType     String
+  sourceFile     String
+  sourceHash     String
+  parserVersion  String
+  confidence     Float?
+  metadataJson   String
+  createdAt      DateTime @default(now())
+
+  importRun ImportRun  @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  snapshots Snapshot[]
+
+  @@index([importRunId])
+  @@index([sourceHash])
+  @@index([sourceType])
+}
+
+model Snapshot {
+  id             String    @id @default(cuid())
+  importRunId    String
+  importSourceId String
+  domain         String
+  snapshotType   String
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  observedAt     DateTime?
+  confidence     Float?
+  status         String
+  validationStatus String
+  dataJson       String
+  evidenceJson   String
+  articleId      String?
+  pv             Int?
+  likes          Int?
+  comments       Int?
+  createdAt      DateTime  @default(now())
+
+  importRun    ImportRun    @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  importSource ImportSource @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
+  article      Article?     @relation(fields: [articleId], references: [id], onDelete: SetNull)
+
+  @@index([importRunId])
+  @@index([importSourceId])
+  @@index([domain, snapshotType, status, observedAt])
+  @@index([domain, status, createdAt])
+  @@index([articleId])
 }
 
 model FreeArticleDraft {
