@@ -1,0 +1,24 @@
+{
+  "datasetVersion": "2026-07-23-v1",
+  "accountName": "スージーQ",
+  "caseId": "Case No.002",
+  "capturedAt": "2026-07-23T09:49:00+09:00",
+  "metrics": {
+    "totalViews": 52132,
+    "comments": 30,
+    "likes": 1544
+  },
+  "salesData": {
+    "coverageStart": "2025-12-05",
+    "coverageEnd": "2026-07-10",
+    "transactionCount": 216,
+    "grossSales": 201096,
+    "currency": "JPY"
+  },
+  "dataQuality": {
+    "salesSource": "note sales CSV",
+    "accessSource": "note dashboard screenshots",
+    "articleLevelMetricsStatus": "pending_structured_extraction",
+    "personalDataStored": false
+  }
+}
