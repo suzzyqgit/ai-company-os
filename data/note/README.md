@@ -12,6 +12,25 @@ CEO, CPO, CMO, and Chief AI Architect must reference this directory when reviewi
 - `current/`: Latest approved business snapshot for shared executive reference.
 - `reports/`: Generated analysis and derived reporting based on approved data.
 
+
+## Data Architecture
+
+```text
+Article Master
+↓
+PV
+↓
+Sales
+↓
+AI Analysis
+↓
+Improvement Ideas
+↓
+Business Decisions
+```
+
+The Article Master is the canonical reference layer for all future note datasets. Every future dataset must reference `article_id`.
+
 ## Data Governance
 
 Purchaser names, transaction IDs, registration numbers, and other personal or sensitive information must not be committed to this repository.
