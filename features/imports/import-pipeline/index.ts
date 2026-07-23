@@ -6,3 +6,4 @@ export * from "./phase1a-output.ts";
 export * from "./phase1b.ts";
 export * from "./snapshot-feed.ts";
 export * from "./types.ts";
+export * from "../sales/index.ts";
