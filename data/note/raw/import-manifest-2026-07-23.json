@@ -1,0 +1,31 @@
+{
+  "manifest_version": "1.0",
+  "created_at": "2026-07-23T16:53:57+09:00",
+  "source_basis": "input_files_only",
+  "inputs": [
+    {
+      "file_name": "note_articles_screenshots_compiled.docx.zip",
+      "role": "article profile screenshots",
+      "stored_personal_data": false
+    },
+    {
+      "file_name": "note_pv_screenshots_compiled.docx.zip",
+      "role": "PV and dashboard screenshots",
+      "stored_personal_data": false
+    },
+    {
+      "file_name": "note_sales_history_compiled.docx.zip",
+      "role": "sales dashboard screenshot and sales CSV file inventory",
+      "stored_personal_data": false
+    }
+  ],
+  "outputs": [
+    "data/note/articles/articles.csv",
+    "data/note/articles/article_metrics.csv",
+    "data/note/sales/content_sales.csv",
+    "data/note/sales/monthly_sales.csv",
+    "data/note/current/business_snapshot.json",
+    "data/note/reports/data-quality-2026-07-23.md"
+  ],
+  "privacy_policy": "Purchaser names, transaction IDs, registration numbers, and other personal data are not stored."
+}

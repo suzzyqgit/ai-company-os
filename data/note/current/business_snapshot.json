@@ -1,24 +1,39 @@
 {
-  "datasetVersion": "2026-07-23-v1",
-  "accountName": "スージーQ",
-  "caseId": "Case No.002",
-  "capturedAt": "2026-07-23T09:49:00+09:00",
+  "dataset_version": "2026-07-23-v1.0-reconstructed",
+  "case_id": "Case No.002",
+  "captured_at": "2026-07-23T09:49:00+09:00",
+  "source_basis": "input_files_only",
+  "inputs": [
+    "note_articles_screenshots_compiled.docx.zip",
+    "note_pv_screenshots_compiled.docx.zip",
+    "note_sales_history_compiled.docx.zip"
+  ],
+  "record_counts": {
+    "articles": 89,
+    "article_metrics": 11,
+    "sales_contents": 0,
+    "monthly_records": 7
+  },
   "metrics": {
-    "totalViews": 52132,
+    "total_views": 52132,
     "comments": 30,
     "likes": 1544
   },
-  "salesData": {
-    "coverageStart": "2025-12-05",
-    "coverageEnd": "2026-07-10",
-    "transactionCount": 216,
-    "grossSales": 201096,
-    "currency": "JPY"
+  "sales_data": {
+    "coverage_start": "2025-12",
+    "coverage_end": "2026-06",
+    "transaction_count": null,
+    "gross_sales_jpy": 200096,
+    "currency": "JPY",
+    "current_month_visible_gross_sales_jpy": 1000
   },
-  "dataQuality": {
-    "salesSource": "note sales CSV",
-    "accessSource": "note dashboard screenshots",
-    "articleLevelMetricsStatus": "pending_structured_extraction",
-    "personalDataStored": false
+  "data_quality": {
+    "validation_status": "passed_with_missing_data",
+    "validation_issues": [],
+    "privacy_scan": "passed",
+    "personal_data_stored": false,
+    "missing_data_count": 7,
+    "unresolved_metric_rows": 3,
+    "content_sales_status": "missing_source_csv_bodies"
   }
 }
