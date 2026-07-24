@@ -46,6 +46,12 @@ enum ImportMode {
   COMMIT
 }
 
+enum PromotionRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -69,6 +75,10 @@ model Article {
   freeArticleIdeas     FreeArticleIdea[]
   contentGaps          ContentGap[]
   revenueTasks         RevenueTask[]
+  productId            String?
+  product              Product?                  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
 }
 
 model ArticleDailyMetric {
@@ -165,26 +175,27 @@ model ArticleAccessImportItem {
 }
 
 model ImportRun {
-  id              String    @id @default(cuid())
+  id              String               @id @default(cuid())
   status          String
-  startedAt       DateTime  @default(now())
+  startedAt       DateTime             @default(now())
   completedAt     DateTime?
   importedAt      DateTime
   importedBy      String
   pipelineVersion String
   summaryJson     String?
   error           String?
-  importMode      ImportMode            @default(DRY_RUN)
-  approvalStatus  ImportApprovalStatus  @default(PENDING)
+  importMode      ImportMode           @default(DRY_RUN)
+  approvalStatus  ImportApprovalStatus @default(PENDING)
   reviewedAt      DateTime?
   reviewedBy      String?
   reviewReason    String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
-  sources   ImportSource[]
-  snapshots Snapshot[]
+  sources               ImportSource[]
+  snapshots             Snapshot[]
   canonicalSalesRecords CanonicalSalesRecord[]
+  promotionRuns         PromotionRun[]
 
   @@index([status])
   @@index([importedAt])
@@ -192,7 +203,7 @@ model ImportRun {
 }
 
 model ImportSource {
-  id             String   @id @default(cuid())
+  id             String               @id @default(cuid())
   importRunId    String
   sourceType     String
   sourceFile     String
@@ -204,10 +215,10 @@ model ImportSource {
   reviewedAt     DateTime?
   reviewedBy     String?
   reviewReason   String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime             @default(now())
 
-  importRun ImportRun  @relation(fields: [importRunId], references: [id], onDelete: Cascade)
-  snapshots Snapshot[]
+  importRun             ImportRun              @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  snapshots             Snapshot[]
   canonicalSalesRecords CanonicalSalesRecord[]
 
   @@index([importRunId])
@@ -216,39 +227,40 @@ model ImportSource {
 }
 
 model CanonicalSalesRecord {
-  id             String               @id @default(cuid())
-  importRunId    String
-  importSourceId String
-  businessKey    String
-  sourceHash     String
-  schemaVersion  String
-  parserVersion  String
-  saleDate       DateTime
-  productName    String
+  id                    String               @id @default(cuid())
+  importRunId           String
+  importSourceId        String
+  businessKey           String
+  sourceHash            String
+  schemaVersion         String
+  parserVersion         String
+  saleDate              DateTime
+  productName           String
   originalProductName   String
   normalizedProductName String
   candidateArticleId    String?
   candidateProductId    String?
   matchConfidence       Float?
-  quantity       Int
-  grossAmount    Int
-  netAmount      Int?
-  currency       String
-  platform       String
-  source         String
-  confidence     Float
-  approvalStatus ImportApprovalStatus @default(PENDING)
-  validationJson String
-  importedAt     DateTime
-  importedBy     String
-  reviewedAt     DateTime?
-  reviewedBy     String?
-  reviewReason   String?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  quantity              Int
+  grossAmount           Int
+  netAmount             Int?
+  currency              String
+  platform              String
+  source                String
+  confidence            Float
+  approvalStatus        ImportApprovalStatus @default(PENDING)
+  validationJson        String
+  importedAt            DateTime
+  importedBy            String
+  reviewedAt            DateTime?
+  reviewedBy            String?
+  reviewReason          String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
   importRun    ImportRun    @relation(fields: [importRunId], references: [id], onDelete: Cascade)
   importSource ImportSource @relation(fields: [importSourceId], references: [id], onDelete: Cascade)
+  promotedSale Sale?
 
   @@unique([importSourceId, businessKey, sourceHash])
   @@index([importRunId])
@@ -258,25 +270,94 @@ model CanonicalSalesRecord {
   @@index([sourceHash])
 }
 
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles  Article[]
+  saleItems SaleItem[]
+
+  @@index([name])
+}
+
+model Sale {
+  id             String   @id @default(cuid())
+  saleDate       DateTime
+  grossAmount    Int
+  netAmount      Int?
+  currency       String
+  platform       String
+  businessKey    String   @unique
+  importLedgerId String   @unique
+  createdAt      DateTime @default(now())
+
+  importLedger CanonicalSalesRecord @relation(fields: [importLedgerId], references: [id], onDelete: Restrict)
+  items        SaleItem[]
+
+  @@index([saleDate])
+  @@index([platform])
+}
+
+model SaleItem {
+  id        String @id @default(cuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Int
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([saleId, productId])
+  @@index([productId])
+}
+
+model PromotionRun {
+  id               String             @id @default(cuid())
+  startedAt        DateTime           @default(now())
+  completedAt      DateTime?
+  status           PromotionRunStatus
+  importRunId      String
+  inputFingerprint String
+  promotedCount    Int                @default(0)
+  skippedCount     Int                @default(0)
+  errorCount       Int                @default(0)
+  rollbackExecuted Boolean            @default(false)
+  executedBy       String
+  ownerApprovedBy  String
+  ownerApprovedAt  DateTime
+  errorMessage     String?
+  createdAt        DateTime           @default(now())
+
+  importRun ImportRun @relation(fields: [importRunId], references: [id], onDelete: Restrict)
+
+  @@index([importRunId])
+  @@index([status])
+  @@index([inputFingerprint])
+}
+
 model Snapshot {
-  id             String    @id @default(cuid())
-  importRunId    String
-  importSourceId String
-  domain         String
-  snapshotType   String
-  periodStart    DateTime?
-  periodEnd      DateTime?
-  observedAt     DateTime?
-  confidence     Float?
-  status         String
+  id               String    @id @default(cuid())
+  importRunId      String
+  importSourceId   String
+  domain           String
+  snapshotType     String
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  observedAt       DateTime?
+  confidence       Float?
+  status           String
   validationStatus String
-  dataJson       String
-  evidenceJson   String
-  articleId      String?
-  pv             Int?
-  likes          Int?
-  comments       Int?
-  createdAt      DateTime  @default(now())
+  dataJson         String
+  evidenceJson     String
+  articleId        String?
+  pv               Int?
+  likes            Int?
+  comments         Int?
+  createdAt        DateTime  @default(now())
 
   importRun    ImportRun    @relation(fields: [importRunId], references: [id], onDelete: Cascade)
   importSource ImportSource @relation(fields: [importSourceId], references: [id], onDelete: Cascade)

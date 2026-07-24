@@ -3,5 +3,6 @@ export * from "./csv-adapter-v1.ts";
 export * from "./duplicate-detector.ts";
 export * from "./import-ledger.ts";
 export * from "./promotion-readiness.ts";
+export * from "./data-layer-promotion.ts";
 export * from "./privacy-filter.ts";
 export * from "./sales-import-adapter.ts";
