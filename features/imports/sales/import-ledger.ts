@@ -152,6 +152,8 @@ export async function persistSalesImportLedgerInTransaction({
         parserVersion: source.parserVersion,
         saleDate: new Date(record.sale.saleDate),
         productName: record.sale.productName,
+        originalProductName: record.sale.productName,
+        normalizedProductName: record.sale.productName.normalize("NFKC").trim(),
         quantity: record.sale.quantity,
         grossAmount: record.sale.grossAmount,
         netAmount: record.sale.netAmount,

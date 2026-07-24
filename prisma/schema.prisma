@@ -41,6 +41,11 @@ enum ImportApprovalStatus {
   REJECTED
 }
 
+enum ImportMode {
+  DRY_RUN
+  COMMIT
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -169,6 +174,11 @@ model ImportRun {
   pipelineVersion String
   summaryJson     String?
   error           String?
+  importMode      ImportMode            @default(DRY_RUN)
+  approvalStatus  ImportApprovalStatus  @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewReason    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -190,6 +200,10 @@ model ImportSource {
   parserVersion  String
   confidence     Float?
   metadataJson   String
+  approvalStatus ImportApprovalStatus @default(PENDING)
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewReason   String?
   createdAt      DateTime @default(now())
 
   importRun ImportRun  @relation(fields: [importRunId], references: [id], onDelete: Cascade)
@@ -211,6 +225,11 @@ model CanonicalSalesRecord {
   parserVersion  String
   saleDate       DateTime
   productName    String
+  originalProductName   String
+  normalizedProductName String
+  candidateArticleId    String?
+  candidateProductId    String?
+  matchConfidence       Float?
   quantity       Int
   grossAmount    Int
   netAmount      Int?
