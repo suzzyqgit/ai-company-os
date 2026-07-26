@@ -1,0 +1,146 @@
+# Governance
+
+This directory contains the governance documents that define how AI Company is managed, how decisions are made, and how responsibilities are assigned across executive roles.
+
+These documents serve as the authoritative governance framework for AI Company OS.
+
+---
+
+# Purpose
+
+The objectives of this governance framework are to:
+
+- Define executive responsibilities.
+- Clarify decision-making authority.
+- Standardize governance principles.
+- Ensure consistent business operations.
+- Support sustainable organizational growth.
+- Provide a common operating model for both humans and AI executives.
+
+---
+
+# Governance Structure
+
+```
+Owner
+    │
+    ▼
+AI Executive Charter
+    │
+    ▼
+CEO Directive
+    │
+    ├── CPO Directive
+    ├── CMO Directive
+    ├── Chief AI Architect Directive
+    └── Chief Software Engineer Directive
+```
+
+The AI Executive Charter is the highest governance document within this directory.
+
+---
+
+# Governance Documents
+
+| Document | Purpose |
+|----------|---------|
+| AI_Executive_Charter_v1.0.md | Defines the executive governance framework |
+| CEO_Directive_v3.0.md | Defines overall company management |
+| CPO_Directive_v3.0.md | Defines product strategy and portfolio management |
+| CMO_Directive_v3.0.md | Defines marketing and sales responsibilities |
+| Chief_AI_Architect_Directive_v3.0.md | Defines enterprise architecture governance |
+| Chief_Software_Engineer_Directive_v3.0.md | Defines engineering implementation governance |
+| CHANGELOG.md | Records governance changes |
+
+---
+
+# Document Priority
+
+When multiple governance documents apply, they shall be interpreted in the following order:
+
+1. Owner Decisions
+2. AI Executive Charter
+3. CEO Directive
+4. Executive Directives
+5. Repository Standards
+6. Implementation Documents
+
+Higher-priority documents always override lower-priority documents.
+
+---
+
+# Executive Roles
+
+AI Company currently defines the following executive roles.
+
+- Owner
+- Chief Executive Officer (CEO)
+- Chief Product Officer (CPO)
+- Chief Marketing Officer (CMO)
+- Chief AI Architect
+- Chief Software Engineer
+
+Each executive operates independently within their delegated authority while collaborating through the governance framework.
+
+---
+
+# Governance Principles
+
+All governance documents follow these principles.
+
+- Business First
+- Simplicity First
+- Accountability
+- Long-term Sustainability
+- Continuous Improvement
+- Documentation First
+- Clear Separation of Responsibilities
+
+---
+
+# Document Management
+
+Governance documents shall:
+
+- remain version controlled;
+- record significant revisions;
+- maintain backward traceability;
+- preserve historical decisions;
+- follow repository documentation standards.
+
+---
+
+# Updating Governance
+
+Changes to governance documents should occur only when:
+
+- organizational responsibilities change;
+- governance policies evolve;
+- executive roles are added or modified;
+- architectural governance changes;
+- engineering governance changes.
+
+Major governance changes require Owner approval.
+
+---
+
+# Related Directories
+
+```
+docs/
+├── governance/
+├── standards/
+├── handovers/
+├── owner/
+└── company-memory/
+```
+
+---
+
+# Approval
+
+Approved by:
+
+**Owner**
+
+AI Company
