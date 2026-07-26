@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -31,11 +31,25 @@ const sale: CanonicalSale = {
 
 async function createPrismaClient() {
   const directory = await mkdtemp(join(process.env.TMPDIR ?? "/tmp", "sales-ledger-"));
-  const databaseUrl = `file:${join(directory, "test.db")}`;
-  await execFileAsync("npx", ["prisma", "db", "push", "--skip-generate"], {
-    cwd: process.cwd(),
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-  });
+  const databasePath = join(directory, "test.db");
+  const databaseUrl = `file:${databasePath}`;
+  const migrationDirectories = await readdir(
+    join(process.cwd(), "prisma/migrations"),
+    { withFileTypes: true },
+  );
+
+  for (const migrationDirectory of migrationDirectories
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()) {
+    await execFileAsync(
+      "sqlite3",
+      [databasePath, `.read ${join(process.cwd(), "prisma/migrations", migrationDirectory, "migration.sql")}`],
+      {
+        cwd: process.cwd(),
+      },
+    );
+  }
 
   return {
     prisma: new PrismaClient({ datasources: { db: { url: databaseUrl } } }),

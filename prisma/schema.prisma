@@ -52,6 +52,38 @@ enum PromotionRunStatus {
   FAILED
 }
 
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum AgentMessageType {
+  STATUS_UPDATE
+  REQUEST
+  RESPONSE
+  DECISION
+  REVIEW
+  APPROVAL
+  CHANGE_REQUEST
+  HANDOFF
+}
+
+enum CommunicationPolicyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ExtensionStatus {
+  ACTIVE
+  DEPRECATED
+}
+
 model Article {
   id                String   @id @default(cuid())
   title             String
@@ -556,4 +588,116 @@ model RevenueTask {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   completedAt DateTime?
+}
+
+model AgentRegistry {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  displayName String
+  role        String
+  status      AgentStatus @default(ACTIVE)
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  createdConversations Conversation[] @relation("ConversationCreatedByAgent")
+  sentMessages         AgentMessage[]
+
+  @@index([status])
+  @@index([role])
+}
+
+model Conversation {
+  id               String             @id @default(cuid())
+  key              String             @unique
+  title            String
+  topic            String?
+  status           ConversationStatus @default(OPEN)
+  createdByAgentId String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  createdByAgent AgentRegistry  @relation("ConversationCreatedByAgent", fields: [createdByAgentId], references: [id], onDelete: Restrict)
+  messages       AgentMessage[]
+
+  @@index([status])
+  @@index([createdByAgentId])
+  @@index([createdAt])
+}
+
+model AgentMessage {
+  id               String           @id @default(cuid())
+  conversationId   String
+  senderAgentId    String
+  messageType      AgentMessageType
+  content          String
+  summary          String?
+  schemaVersion    String           @default("agent-message-core-v1")
+  extensionType    String?
+  extensionVersion String?
+  extensionPayload String?
+  sentAt           DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  conversation Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderAgent  AgentRegistry        @relation(fields: [senderAgentId], references: [id], onDelete: Restrict)
+  attachments  AttachmentMetadata[]
+
+  @@index([conversationId])
+  @@index([senderAgentId])
+  @@index([messageType])
+  @@index([extensionType, extensionVersion])
+  @@index([sentAt])
+}
+
+model AttachmentMetadata {
+  id          String   @id @default(cuid())
+  messageId   String
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  checksum    String?
+  storageRef  String
+  description String?
+  createdAt   DateTime @default(now())
+
+  message AgentMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([checksum])
+}
+
+model CommunicationPolicy {
+  id                    String                    @id @default(cuid())
+  key                   String                    @unique
+  name                  String
+  description           String?
+  appliesToAgentKey     String?
+  allowedMessageTypes   String
+  allowedExtensionTypes String
+  retentionPolicy       String?
+  status                CommunicationPolicyStatus @default(ACTIVE)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  @@index([status])
+  @@index([appliesToAgentKey])
+}
+
+model ExtensionRegistry {
+  id               String          @id @default(cuid())
+  extensionType    String
+  extensionVersion String
+  ownerRole        String
+  description      String
+  jsonSchema       String
+  status           ExtensionStatus @default(ACTIVE)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([extensionType, extensionVersion])
+  @@index([extensionType])
+  @@index([status])
+  @@index([ownerRole])
 }

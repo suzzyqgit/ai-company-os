@@ -1,5 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import {
+  agentRegistrySeed,
+  communicationPolicySeed,
+  extensionRegistrySeed,
+  validateAgentCommunicationSeedData,
+} from "./agent-communication-seed-data.mjs";
+import {
   governanceActorRoles,
   governanceActors,
   governancePermissions,
@@ -9,6 +15,68 @@ import {
 } from "./governance-seed-data.mjs";
 
 const prisma = new PrismaClient();
+
+async function seedAgentCommunication() {
+  validateAgentCommunicationSeedData();
+
+  for (const agent of agentRegistrySeed) {
+    await prisma.agentRegistry.upsert({
+      where: { key: agent.key },
+      update: {
+        displayName: agent.displayName,
+        role: agent.role,
+        status: agent.status,
+        description: agent.description,
+      },
+      create: agent,
+    });
+  }
+
+  for (const extension of extensionRegistrySeed) {
+    await prisma.extensionRegistry.upsert({
+      where: {
+        extensionType_extensionVersion: {
+          extensionType: extension.extensionType,
+          extensionVersion: extension.extensionVersion,
+        },
+      },
+      update: {
+        ownerRole: extension.ownerRole,
+        description: extension.description,
+        jsonSchema: extension.jsonSchema,
+        status: extension.status,
+      },
+      create: extension,
+    });
+  }
+
+  for (const policy of communicationPolicySeed) {
+    await prisma.communicationPolicy.upsert({
+      where: { key: policy.key },
+      update: {
+        name: policy.name,
+        description: policy.description,
+        appliesToAgentKey: policy.appliesToAgentKey,
+        allowedMessageTypes: policy.allowedMessageTypes,
+        allowedExtensionTypes: policy.allowedExtensionTypes,
+        retentionPolicy: policy.retentionPolicy,
+        status: policy.status,
+      },
+      create: policy,
+    });
+  }
+
+  const [agentCount, extensionCount, policyCount] = await Promise.all([
+    prisma.agentRegistry.count(),
+    prisma.extensionRegistry.count(),
+    prisma.communicationPolicy.count(),
+  ]);
+
+  console.log("Agent communication seed completed.");
+  console.log(`Agents: ${agentCount}`);
+  console.log(`Extensions: ${extensionCount}`);
+  console.log(`CommunicationPolicies: ${policyCount}`);
+}
 
 async function seedGovernance() {
   validateGovernanceSeedData();
@@ -134,6 +202,7 @@ async function seedGovernance() {
 
 try {
   await seedGovernance();
+  await seedAgentCommunication();
 } finally {
   await prisma.$disconnect();
 }
