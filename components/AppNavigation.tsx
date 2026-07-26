@@ -16,7 +16,10 @@ type NavGroup = {
 const navigationGroups: NavGroup[] = [
   {
     title: "今日の運営",
-    items: [{ label: "Today", href: "/today" }],
+    items: [
+      { label: "Executive", href: "/executive" },
+      { label: "Today", href: "/today" },
+    ],
   },
   {
     title: "コンテンツ",

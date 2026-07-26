@@ -5,6 +5,8 @@ out/
 dist/
 *.log
 *.tsbuildinfo
+.DS_Store
+note-data:/
 .env*
 !.env.example
 
