@@ -17,6 +17,7 @@ export type OwnerActionItem = {
   reason: string;
   expectedOutcome: string;
   blockingDependency: string;
+  href?: string;
 };
 
 export type ReadinessItem = {
@@ -213,6 +214,7 @@ export function buildOwnerActionItems(
       reason: "Canonical sales records exist, but Product is empty.",
       expectedOutcome: "Each approved sales record can resolve to a Product before promotion.",
       blockingDependency: "Owner-approved Article-to-Product manifest.",
+      href: "/product-master",
     });
   }
 

@@ -123,6 +123,14 @@ export default async function ExecutiveWorkflowPage() {
                       Blocking Dependency: {item.blockingDependency}
                     </p>
                   </div>
+                  {item.href ? (
+                    <Link
+                      href={item.href}
+                      className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+                    >
+                      Open Action
+                    </Link>
+                  ) : null}
                   <dl className="mt-4 grid gap-3 text-sm leading-6 text-zinc-700 md:grid-cols-2">
                     <div>
                       <dt className="font-semibold text-zinc-950">Reason</dt>

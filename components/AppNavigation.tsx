@@ -44,6 +44,7 @@ const navigationGroups: NavGroup[] = [
       { label: "noteアクセスOCR", href: "/imports/note-access" },
       { label: "販売履歴CSV", href: "/imports/note-sales" },
       { label: "公開記事同期", href: "/imports/note-profile" },
+      { label: "Product Master", href: "/product-master" },
     ],
   },
   {
