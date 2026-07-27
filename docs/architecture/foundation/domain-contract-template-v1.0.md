@@ -2,7 +2,7 @@
 artifact_id: ARCH-CONTRACT-001
 title: Domain Contract Template
 version: 1.0
-status: Draft for CEO Review
+status: Repository Registered
 owner: Chief AI Architect
 reviewer: CEO
 artifact_type: Architecture Standard
@@ -695,4 +695,4 @@ CEO Review前のOpen Issueは、各Domain Contract内で明示する。
 
 | Version | Date | Status | Changes |
 |---|---|---|---|
-| 1.0 | 2026-07-27 | Draft for CEO Review | Initial complete draft |
+| 1.0 | 2026-07-27 | Repository Registered | Initial complete draft |

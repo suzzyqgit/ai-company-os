@@ -1,6 +1,6 @@
 # Glossary v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 Defines common terminology including:
 - Evidence

@@ -1,6 +1,6 @@
 # Architecture Roadmap v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 Phases
 1. Foundation

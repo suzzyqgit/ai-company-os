@@ -2,7 +2,7 @@
 artifact_id: CROSS_DOMAIN_EVENT_CATALOG_V1.0.MD
 title: Cross-Domain Event Catalog v1.0
 version: 1.0
-status: Draft for CEO Review
+status: Repository Registered
 owner: Chief AI Architect
 reviewer: CEO
 ---

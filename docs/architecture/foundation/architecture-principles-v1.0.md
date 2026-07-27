@@ -2,7 +2,7 @@
 artifact_id: ARCH-PRINCIPLE-001
 title: Architecture Principles
 version: 1.0
-status: Draft for CEO Review
+status: Repository Registered
 owner: Chief AI Architect
 reviewer: CEO
 artifact_type: Architecture Standard
@@ -463,4 +463,4 @@ Architecture Artifactは最低限以下を満たす。
 
 | Version | Date | Status | Changes |
 |---|---|---|---|
-| 1.0 | 2026-07-27 | Draft for CEO Review | Initial complete draft |
+| 1.0 | 2026-07-27 | Repository Registered | Initial complete draft |

@@ -1,6 +1,6 @@
 # ADR Catalog v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## Purpose
 Architecture Decision Recordを管理する。

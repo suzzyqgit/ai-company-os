@@ -1,6 +1,6 @@
 # Architecture Change Management Framework v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## Purpose
 AI Company OSのアーキテクチャ変更を統制する。

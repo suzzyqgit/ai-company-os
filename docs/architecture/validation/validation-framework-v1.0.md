@@ -1,6 +1,6 @@
 # Validation Framework v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## Purpose
 Define the validation lifecycle for all architecture artifacts.

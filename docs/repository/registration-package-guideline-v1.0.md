@@ -1,6 +1,6 @@
 # Registration Package Guideline v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 A registration package shall include:
 - Artifact

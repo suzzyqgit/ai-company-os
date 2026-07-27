@@ -1,6 +1,6 @@
 # Architecture Review Checklist v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## Checklist
 - Business Alignment

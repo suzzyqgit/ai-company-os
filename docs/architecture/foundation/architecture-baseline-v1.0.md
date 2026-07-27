@@ -2,7 +2,7 @@
 artifact_id: ARCH-BASELINE-001
 title: Architecture Baseline
 version: 1.0
-status: Draft for CEO Review
+status: Repository Registered
 owner: Chief AI Architect
 reviewer: CEO
 artifact_type: Architecture Baseline
@@ -22,7 +22,7 @@ updated_at: 2026-07-27
 
 Architecture Baselineは、特定時点で公式に合意されたArchitecture Artifact群の基準点である。今後の変更管理、互換性評価、Repository監査、Maturity Assessmentおよび新Version比較は、本Baselineを参照して行う。
 
-本書の`Draft for CEO Review`状態ではBaseline候補であり、CEO承認、Repository Registration、ValidationおよびFreeze完了後に正式なFrozen Baselineとなる。
+本書の`Repository Registered`状態ではBaseline候補であり、CEO承認、Repository Registration、ValidationおよびFreeze完了後に正式なFrozen Baselineとなる。
 
 ## 2. Baseline Objectives
 
@@ -83,7 +83,7 @@ Implementation ArtifactはArchitecture BaselineとTraceabilityを持つことが
 | Baseline ID | BASELINE-ARCH-001 |
 | Name | AI Company OS Architecture Baseline |
 | Version | 1.0 |
-| Candidate Status | Draft for CEO Review |
+| Candidate Status | Repository Registered |
 | Intended Final Status | Frozen |
 | Owner | Chief AI Architect |
 | Approval Authority | CEO |
@@ -221,7 +221,7 @@ Active Operational Baseline
 Architecture Artifactは以下のStatusを使用する。
 
 1. Draft
-2. Draft for CEO Review
+2. Repository Registered
 3. In Review
 4. Approved
 5. Repository Registered
@@ -496,4 +496,4 @@ CEO Reviewで以下を確認する。
 
 | Version | Date | Status | Changes |
 |---|---|---|---|
-| 1.0 | 2026-07-27 | Draft for CEO Review | Initial complete draft |
+| 1.0 | 2026-07-27 | Repository Registered | Initial complete draft |

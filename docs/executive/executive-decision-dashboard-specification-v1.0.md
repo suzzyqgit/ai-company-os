@@ -1,6 +1,6 @@
 # Executive Decision Dashboard Specification v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## KPIs
 - Revenue

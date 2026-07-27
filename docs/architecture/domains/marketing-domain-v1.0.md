@@ -2,7 +2,7 @@
 artifact_id: DOMAIN-MKT-001
 title: Marketing Domain
 version: 1.0
-status: Draft for CEO Review
+status: Repository Registered
 owner: CMO
 architecture_steward: Chief AI Architect
 ---
@@ -113,4 +113,4 @@ Business Requirement
 
 |Version|Status|
 |---|---|
-|1.0|Draft for CEO Review|
+|1.0|Repository Registered|

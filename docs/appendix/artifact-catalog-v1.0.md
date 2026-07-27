@@ -1,6 +1,6 @@
 # Artifact Catalog v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 Lists all architecture artifacts with:
 - Artifact ID

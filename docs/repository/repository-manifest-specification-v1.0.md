@@ -1,6 +1,6 @@
 # Repository Manifest Specification v1.0
 
-Status: Draft for CEO Review
+Status: Repository Registered
 
 ## Required Fields
 - Artifact ID
