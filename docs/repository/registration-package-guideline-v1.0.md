@@ -1,0 +1,10 @@
+# Registration Package Guideline v1.0
+
+Status: Draft for CEO Review
+
+A registration package shall include:
+- Artifact
+- Decision Report
+- Validation Record
+- Manifest
+- Dependency Report
