@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.1",
+  "artifact_id": "ROLE-SYNC-001",
+  "release": "role-lock-v1.1",
+  "status": "Pre-Freeze",
+  "generated_at": "2026-08-02T19:52:00+09:00",
+  "sync_rule": "GitHub role profiles and Project Instructions embedded profiles must change in the same change set.",
+  "files": {
+    "docs/roles/ceo.md": "bd657915b0b6f9b8e0660e9df27bf32280abf9bfe408be8ae633b729bf3d8244",
+    "docs/roles/cpo.md": "54beeb6326181c8e91eaef336b0f99b9f39acd5ec2f7d5506e2e689df2a08a33",
+    "docs/roles/cmo.md": "e553e4a858c1f29c08613bb419b312a0b107a8cc686c7f5ec525f64f6615c752",
+    "docs/roles/chief-ai-architect.md": "4bcb9341890ea7323318d3de79be2e0d729856cbd2d324e8a7aa64fc4348159a",
+    "docs/roles/chief-software-engineer.md": "21c5f389cfa8dc62d2a29360ab7804f394a2c3a5add77abce1b55ab4dfaf36bd",
+    "docs/roles/cbu.md": "8a97d2873878a6d1ee1321da915821cdef35214cc8fde5c9ed162fe7f399a157",
+    "docs/roles/role-registry.yaml": "34358b2c97a083250db8e2cbce5e0ef778958f9a3aa55cde3a886bced9bde982",
+    "PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt": "fe3c7e35c2b0e713929825759e52150547725a86b8f862c78f36ea43dc771069"
+  },
+  "runtime_repository_parity": "Not Established",
+  "github_registration": "Not Executed",
+  "remote_verification": "Not Executed",
+  "formal_acceptance": "Incomplete",
+  "change_freeze_after_validation": true
+}

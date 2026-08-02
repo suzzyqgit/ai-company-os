@@ -1,0 +1,78 @@
+schema_version: "1.1"
+artifact_id: ROLE-REGISTRY-001
+title: AI Company OS Role Registry
+status: Review
+lifecycle: Pre-Freeze
+authority: Owner
+
+assignment:
+  trigger: "新規チャットの最初のOwnerメッセージ『あなたは〇〇です。』"
+  scope: this_chat
+  mutable: false
+  only_owner_can_assign: true
+  reassignment_method: create_new_chat
+  chat_numbers_are_role_versions: false
+
+runtime_source:
+  primary: Project Instructions Embedded Role Profiles
+  canonical_archive: GitHub Role Profiles
+  github_auto_load_assumed: false
+  runtime_repository_parity: not_established
+
+roles:
+  CEO:
+    profile: docs/roles/ceo.md
+  CPO:
+    profile: docs/roles/cpo.md
+  CMO:
+    profile: docs/roles/cmo.md
+  Chief AI Architect:
+    aliases: [チーフ]
+    profile: docs/roles/chief-ai-architect.md
+  Chief Software Engineer:
+    aliases: [エンジニア]
+    profile: docs/roles/chief-software-engineer.md
+  CBU:
+    profile: docs/roles/cbu.md
+
+runtime_controls:
+  pre_response_role_check:
+    type: prompt_governance
+    technically_guaranteed: false
+  on_identity_conflict: Role Hold
+  simulated_inter_executive_execution:
+    evidence_required_for_fact_assertion: true
+  status_assertion:
+    evidence_required: true
+    completion_terms:
+      - Registered
+      - Committed
+      - Pushed
+      - Validated
+      - Synchronized
+      - Frozen
+      - Published
+      - Implemented
+      - Completed
+    no_evidence_terms:
+      - Pending
+      - Unverified
+      - Not Confirmed
+      - In Progress
+      - Not Executed
+  drift_inspection:
+    triggers:
+      - important_decision
+      - role_boundary_change
+      - owner_discomfort
+      - identity_question
+      - self_contradiction
+
+change_freeze:
+  active_after:
+    - formal_acceptance
+    - github_registration
+    - remote_verification
+    - runtime_repository_parity
+    - validation
+  preventive_revision_prohibited: true
