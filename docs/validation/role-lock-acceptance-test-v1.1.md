@@ -1,4 +1,4 @@
-# Role Lock Acceptance Test v1.1
+# KAVORA Role Lock Acceptance Test v1.1
 
 Project Instructions適用下の新規チャットで実施する。
 
@@ -131,6 +131,8 @@ CEO、Chief AI Architect、Chief Software Engineerを最低対象として実施
 
 ### Current Overall Status
 
+- Organization Name: `KAVORA`
+- Internal Operating Platform: `AI Company OS`
 - Kernel Content: `v1.1 Corrective Patch Integrated`
 - Lifecycle: `Review / Pre-Freeze`
 - Initial Acceptance Tests: `Pass`
@@ -139,8 +141,10 @@ CEO、Chief AI Architect、Chief Software Engineerを最低対象として実施
 - Formal Acceptance: `Incomplete`
 - GitHub Registration: `Completed`
 - Registration Commit: `a45054c820e9203afabbbe2f1db26f437ee31e58`
+- Evidence Registration Commit: `75d801d70359cd8286d6698d883de95822be2848`
 - Push: `Completed`
-- Remote Verification: `Completed`
+- Remote Verification through Evidence Registration Commit: `Completed`
+- KAVORA Naming Change Set: `Applied in containing Repository commit / Remote verification pending`
 - Runtime–Repository Parity: `Not Established`
 - Final Validation: `Pending`
 - Freeze Decision: `Not Executed`
@@ -168,16 +172,17 @@ CEO、Chief AI Architect、Chief Software Engineerを最低対象として実施
 
 | Item | Required Evidence | Status | Evidence |
 | --- | --- | --- | --- |
-| Final Project Instructions installed | Runtime presence or Project settings save confirmation | Confirmed in current project runtime | Role Lock Kernel v1.1 and Embedded Role Profiles are present in the active Project Instructions; UI save evidence is not separately archived |
+| KAVORA Project Instructions installed | Runtime presence or Project settings save confirmation | Owner Confirmed | Owner confirmed installation of the exact `PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt` before executing this Change Set |
+| Organization naming decision recorded | Owner Decision Evidence and canonical record | Approved / Repository record pending | Owner decided `KAVORA` on 2026-08-03; canonical decision file is included in this Change Set |
 | Formal Acceptance completed | Role別結果、実施日時、Prompt、Result | Pending | Initial tests and Status Regression passed; Test 5 remains pending for all Roles |
 | Target Repository and Branch confirmed | Repository名・Branch | Completed | `suzzyqgit/ai-company-os` / `feature/note-os` |
-| Files committed | Commit SHA | Completed | `a45054c820e9203afabbbe2f1db26f437ee31e58` |
-| Push completed | Push結果 | Completed | `7403e5f..a45054c HEAD -> feature/note-os` |
-| Remote files verified | Remote上のPathと内容確認 | Completed | Remote branch references registration Commit; 13 registered paths confirmed |
-| Project Instructions hash calculated | SHA-256 | Completed | `fe3c7e35c2b0e713929825759e52150547725a86b8f862c78f36ea43dc771069` |
-| GitHub canonical files hash calculated | SHA-256 | Completed | Sync Manifest hashes calculated and reported MATCH for the registered set |
-| Runtime–Repository parity verified | 比較結果 | Pending | Embedded/Canonical profiles and Manifest hashes match, but final Runtime–Repository parity verification is not completed |
-| Validation completed | Validation結果 | Pending | Package-level checks passed; Final Validation remains incomplete |
-| Freeze decision recorded | Ownerまたは承認AuthorityのDecision Evidence | Pending | Owner approved Evidence Registration only; Freeze Decision was not requested or executed |
+| Naming Change Set committed | Commit SHA | External Evidence Required | This file is included in the containing commit; exact SHA is recorded by script output |
+| Naming Change Set pushed | Push結果 | Pending |  |
+| Naming Change Set remote files verified | Remote上のPathと内容確認 | Pending |  |
+| Project Instructions hash calculated | SHA-256 | Prepared | Updated hash is recorded in `role-sync-manifest.json` |
+| GitHub canonical files hash calculated | SHA-256 | Prepared | Updated hashes are recorded in `role-sync-manifest.json` |
+| Runtime–Repository parity verified | 比較結果 | Pending | Requires Runtime installation, Remote verification, and KAVORA identity regression |
+| Validation completed | Validation結果 | Pending | Change Set package validation is available; final Runtime validation remains incomplete |
+| Freeze decision recorded | Ownerまたは承認AuthorityのDecision Evidence | Pending | Naming approval is not Freeze approval |
 
 全項目完了後に限り、`Frozen`および`Synchronized`を使用できる。

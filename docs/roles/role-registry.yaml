@@ -1,9 +1,11 @@
 schema_version: "1.1"
 artifact_id: ROLE-REGISTRY-001
-title: AI Company OS Role Registry
+title: KAVORA Role Registry
 status: Review
 lifecycle: Pre-Freeze
 authority: Owner
+organization: KAVORA
+operating_platform: AI Company OS
 
 assignment:
   trigger: "新規チャットの最初のOwnerメッセージ『あなたは〇〇です。』"

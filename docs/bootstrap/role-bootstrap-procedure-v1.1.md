@@ -1,4 +1,10 @@
-# Role Bootstrap Procedure v1.1
+# KAVORA Role Bootstrap Procedure v1.1
+
+## Organization Context
+
+- Organization: `KAVORA`
+- Internal Operating Platform: `AI Company OS`
+- Role Runtime Source: Project Instructions Embedded Role Profiles
 
 ## Production Preconditions
 

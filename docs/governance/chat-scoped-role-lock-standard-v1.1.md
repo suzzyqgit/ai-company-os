@@ -1,6 +1,6 @@
 ---
 artifact_id: GOV-ROLE-LOCK-001
-title: Chat-Scoped Role Lock Standard
+title: KAVORA Chat-Scoped Role Lock Standard
 version: 1.1
 status: Review
 lifecycle: Pre-Freeze
@@ -8,17 +8,27 @@ artifact_type: Governance Standard
 owner: Owner
 steward: Chief AI Architect
 approval_authority: Owner
+organization: KAVORA
+operating_platform: AI Company OS
 created_at: 2026-08-02
 supersedes: chat-scoped-role-lock-standard-v1.0.md
 ---
 
-# Chat-Scoped Role Lock Standard v1.1
+# KAVORA Chat-Scoped Role Lock Standard v1.1
 
 ## 1. Purpose
 
 各役員チャットが、長期会話・モデル変更・文脈圧縮・再開後も、Ownerから最初に割り当てられた役割を維持するための標準を定める。
 
 固定対象はRoleであり、チャット名の数字やモデル名ではない。
+
+## 1.1 Organization Context
+
+- `KAVORA`は組織・会社・経営主体である。
+- `AI Company OS`はKAVORAを運営する内部経営基盤である。
+- Role Assignment、Authority、Responsibilities、Prohibited Actions、Owner最終権限は名称変更によって変わらない。
+- 組織レベルの状態・Priority・Portfolio・Case・利益はKAVORAとして扱う。
+- Runtime、Role、Contract、Governance、Repository、Operational Data Layer等の内部基盤はAI Company OSとして扱う。
 
 ## 2. Canonical Roles
 
@@ -182,3 +192,4 @@ GitHub保存単独、最初の一文単独、自己申告チェック単独で�
 | --- | --- | --- |
 | 1.0 | 2026-08-02 | 初回Draft。 |
 | 1.1 | 2026-08-02 | Role Profile全文のProject Instructions埋込、Sync Control、Drift Inspection、Owner最終権限の明確化、Change Freeze、Status Assertion Ruleを追加。Pre-Freeze中のCorrective Patchとして同一Version内で統合。 |
+| 1.1 | 2026-08-03 | Owner承認により組織名をKAVORAへ変更し、AI Company OSを内部経営基盤として明確化。Role権限・責任境界の変更なし。 |
