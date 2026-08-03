@@ -3,7 +3,7 @@
   "artifact_id": "ROLE-SYNC-001",
   "release": "role-lock-v1.1",
   "status": "Pre-Freeze",
-  "generated_at": "2026-08-02T19:52:00+09:00",
+  "generated_at": "2026-08-03T01:43:00+09:00",
   "sync_rule": "GitHub role profiles and Project Instructions embedded profiles must change in the same change set.",
   "files": {
     "docs/roles/ceo.md": "bd657915b0b6f9b8e0660e9df27bf32280abf9bfe408be8ae633b729bf3d8244",
@@ -16,8 +16,17 @@
     "PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt": "fe3c7e35c2b0e713929825759e52150547725a86b8f862c78f36ea43dc771069"
   },
   "runtime_repository_parity": "Not Established",
-  "github_registration": "Not Executed",
-  "remote_verification": "Not Executed",
+  "github_registration": "Completed",
+  "remote_verification": "Completed",
   "formal_acceptance": "Incomplete",
-  "change_freeze_after_validation": true
+  "change_freeze_after_validation": true,
+  "registration_commit": "a45054c820e9203afabbbe2f1db26f437ee31e58",
+  "push": "Completed",
+  "push_evidence": "7403e5f..a45054c HEAD -> feature/note-os",
+  "initial_acceptance_tests": "Pass",
+  "status_assertion_regression": "Pass",
+  "drift_test": "Pending",
+  "final_validation": "Pending",
+  "freeze_decision": "Not Executed",
+  "frozen": false
 }

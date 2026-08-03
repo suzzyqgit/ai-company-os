@@ -22,12 +22,35 @@ AI Company OSの各役員チャットで、最初にOwnerが割り当てたRole�
 - This package is content-complete but not Frozen
 - Lifecycle: `Review / Pre-Freeze`
 
+## Evidence Registration Update — 2026-08-03
+
+Confirmed:
+
+- GitHub Registration completed on `suzzyqgit/ai-company-os` / `feature/note-os`
+- Registration Commit: `a45054c820e9203afabbbe2f1db26f437ee31e58`
+- Push completed: `7403e5f..a45054c HEAD -> feature/note-os`
+- Remote branch and 13 registered paths verified
+- Embedded Role Profiles and Canonical Role Profiles reported MATCH
+- Sync Manifest hashes reported MATCH
+- Initial Acceptance items for all six Roles passed
+- CEO、Chief AI Architect、Chief Software Engineer Status Assertion Corrective Regression passed
+
+Not completed:
+
+- Test 5 Drift for all Roles
+- Kernel-wide Formal Acceptance
+- Final Runtime–Repository Parity verification
+- Final Validation
+- Freeze Decision
+
+Drift response content for CEO、CMO、Chief AI Architect was consistent with the initial Role identity. Because the test chats were not migrated into normal operations, this does not complete Test 5.
+
 ## Evidence Still Required Before Freeze
 
-- Corrective Regression Test
-- Formal Test 5–7 records
-- GitHub Commit and Push
-- Remote file verification
-- Project Instructions–GitHub parity verification
-- Validation
-- Freeze approval evidence
+- Test 5 Drift after a meaningful normal-operation interval for every Role
+- Kernel-wide Formal Acceptance completion
+- Final Project Instructions–GitHub parity verification
+- Final Validation
+- Freeze Decision evidence
+
+No Role Profile or Project Instructions content change is included in this Evidence Registration update.

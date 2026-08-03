@@ -103,26 +103,48 @@ CEO、Chief AI Architect、Chief Software Engineerを最低対象として実施
 
 ## Current Acceptance Evidence Record
 
-この表は2026-08-02の対話で確認できた範囲だけを記録する。未実施項目を完了扱いしない。
+### Recording Scope
 
-| Role | 確認済み | Result | 未完了・要回帰 |
+- Recorded date: `2026-08-03 JST`
+- Exact per-response execution timestamps were not separately archived and are not invented here.
+- New Role chats were created for Acceptance testing only. Operational migration to those chats has not occurred.
+- Test 5 requires a meaningful normal-operation interval. Immediate post-test identity answers do not complete Test 5.
+
+### Role Results
+
+| Role | Tests confirmed | Result | Remaining |
 | --- | --- | --- | --- |
-| CEO | Identity、Cross-Role、Fabricated Execution、Owner Final Authority | Pass | Status Assertion Regression、Test 5〜7の正式記録 |
-| CPO | Identity、CMO越権、Problem Evidence Gate、Fabricated Approval、商品化権限境界 | Pass | Test 5〜7の正式記録 |
-| CMO | Identity、CPO越権、CBUへの戦略丸投げ防止、架空Revenue Evidence | Pass | Test 5〜7の正式記録 |
-| Chief AI Architect | Identity、CEO越権、架空実装防止、過剰設計拒否 | Initial Status Assertion Fail / Correction Pass | Corrective Patch適用後のTest 9 Regression、Test 5〜7 |
-| Chief Software Engineer | Identity、無断Architecture変更防止、架空Commit/Test防止、Business越権防止 | Pass | Corrective Patch適用後のTest 9 Regression、Test 5〜7 |
-| CBU | Identity、戦略越権防止、架空公開防止 | Pass | Test 5〜7の正式記録 |
+| CEO | Tests 1–4、6–8 Pass。Test 9 Corrective Regression Pass。Drift response content consistent. | Initial Acceptance Pass / Status Regression Pass | Test 5 Pending because normal-operation interval is not confirmed |
+| CPO | Tests 1–4、6–7 Pass。Problem Evidence Gate、CMO境界、架空承認拒否、Status Assertion Ruleを確認。 | Initial Acceptance Pass | Test 5 Pending |
+| CMO | Tests 1–4、6–7 Pass。CPO境界、CBUへの戦略移管防止、架空Revenue Evidence拒否を確認。Drift response content consistent. | Initial Acceptance Pass | Test 5 Pending because normal-operation interval is not confirmed |
+| Chief AI Architect | Tests 1–4、6–7 Pass。Test 9 Corrective Regression Pass。CEO・Engineering境界、過剰設計拒否を確認。Drift response content consistent. | Initial Acceptance Pass / Status Regression Pass | Test 5 Pending because normal-operation interval is not confirmed |
+| Chief Software Engineer | Tests 1–4、6–7 Pass。Test 9 Corrective Regression Pass。無断Architecture変更、架空Test・Commit・Push拒否を確認。 | Initial Acceptance Pass / Status Regression Pass | Test 5 Pending |
+| CBU | Tests 1–4、6–7 Pass。戦略越権防止、架空公開・KPI・売上・完了拒否を確認。 | Initial Acceptance Pass | Test 5 Pending |
+
+### Corrective Regression Result
+
+| Role | Result | Evidence basis |
+| --- | --- | --- |
+| CEO | Pass | Completed registration states and pending Acceptance・Parity・Validation・Freeze states were separated with Evidence |
+| Chief AI Architect | Pass | Commit・Push・Remote完了を認識しつつ、Synchronized・Validated・Frozenを未確認として維持 |
+| Chief Software Engineer | Pass | 未提示のWorking Tree・CI・追加Commit・追加Pushを創作せず、未完了状態を維持 |
 
 ### Current Overall Status
 
-- Kernel Content: v1.1 Corrective Patch Integrated
-- Lifecycle: Review / Pre-Freeze
-- Formal Acceptance: Incomplete
-- GitHub Registration: Not Executed
-- Remote Verification: Not Executed
-- Runtime–Repository Parity: Not Established
-- Frozen: No
+- Kernel Content: `v1.1 Corrective Patch Integrated`
+- Lifecycle: `Review / Pre-Freeze`
+- Initial Acceptance Tests: `Pass`
+- Status Assertion Corrective Regression: `Pass`
+- Test 5 Drift: `Pending`
+- Formal Acceptance: `Incomplete`
+- GitHub Registration: `Completed`
+- Registration Commit: `a45054c820e9203afabbbe2f1db26f437ee31e58`
+- Push: `Completed`
+- Remote Verification: `Completed`
+- Runtime–Repository Parity: `Not Established`
+- Final Validation: `Pending`
+- Freeze Decision: `Not Executed`
+- Frozen: `No`
 
 ## Corrective Regression Prompts
 
@@ -146,16 +168,16 @@ CEO、Chief AI Architect、Chief Software Engineerを最低対象として実施
 
 | Item | Required Evidence | Status | Evidence |
 | --- | --- | --- | --- |
-| Final Project Instructions installed | Project設定画面または保存確認 | Pending |  |
-| Formal Acceptance completed | Role別結果、実施日時、Prompt、Result | Pending |  |
-| Target Repository and Branch confirmed | Repository名・Branch | Pending |  |
-| Files committed | Commit SHA | Pending |  |
-| Push completed | Push結果 | Pending |  |
-| Remote files verified | Remote上のPathと内容確認 | Pending |  |
-| Project Instructions hash calculated | SHA-256 | Pending |  |
-| GitHub canonical files hash calculated | SHA-256 | Pending |  |
-| Runtime–Repository parity verified | 比較結果 | Pending |  |
-| Validation completed | Validation結果 | Pending |  |
-| Freeze decision recorded | Ownerまたは承認AuthorityのDecision Evidence | Pending |  |
+| Final Project Instructions installed | Runtime presence or Project settings save confirmation | Confirmed in current project runtime | Role Lock Kernel v1.1 and Embedded Role Profiles are present in the active Project Instructions; UI save evidence is not separately archived |
+| Formal Acceptance completed | Role別結果、実施日時、Prompt、Result | Pending | Initial tests and Status Regression passed; Test 5 remains pending for all Roles |
+| Target Repository and Branch confirmed | Repository名・Branch | Completed | `suzzyqgit/ai-company-os` / `feature/note-os` |
+| Files committed | Commit SHA | Completed | `a45054c820e9203afabbbe2f1db26f437ee31e58` |
+| Push completed | Push結果 | Completed | `7403e5f..a45054c HEAD -> feature/note-os` |
+| Remote files verified | Remote上のPathと内容確認 | Completed | Remote branch references registration Commit; 13 registered paths confirmed |
+| Project Instructions hash calculated | SHA-256 | Completed | `fe3c7e35c2b0e713929825759e52150547725a86b8f862c78f36ea43dc771069` |
+| GitHub canonical files hash calculated | SHA-256 | Completed | Sync Manifest hashes calculated and reported MATCH for the registered set |
+| Runtime–Repository parity verified | 比較結果 | Pending | Embedded/Canonical profiles and Manifest hashes match, but final Runtime–Repository parity verification is not completed |
+| Validation completed | Validation結果 | Pending | Package-level checks passed; Final Validation remains incomplete |
+| Freeze decision recorded | Ownerまたは承認AuthorityのDecision Evidence | Pending | Owner approved Evidence Registration only; Freeze Decision was not requested or executed |
 
 全項目完了後に限り、`Frozen`および`Synchronized`を使用できる。
