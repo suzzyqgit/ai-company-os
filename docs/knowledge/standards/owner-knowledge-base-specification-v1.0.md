@@ -12,7 +12,7 @@ approval_authority: CEO
 
 ## Purpose
 
-Define the structure for preserving the Owner's long-term knowledge, decision principles, and strategic insights.
+Define the structure for preserving Owner-confirmed long-term KAVORA knowledge, decision principles, and strategic insights within the AI Company OS Knowledge Layer.
 
 ## Scope
 
@@ -30,12 +30,15 @@ The Owner Knowledge Base shall preserve:
 
 ## Knowledge Sources
 
-Knowledge may be updated only from:
+Owner Knowledge may be created or updated only when it is traceable to at least one of the following:
 
-- Executive Interview
-- Approved Decision
-- Owner Directive
-- Strategic Insight Report
+- Explicit Owner Confirmation
+- Owner Directive or Owner Decision
+- Approved Decision recording Owner-confirmed intent
+
+External or Business Evidence, including Customer, Revenue, Operational, Validation, or Verified External Evidence, may support Owner Knowledge only when it is traceable to one of these Owner-confirmed sources.
+
+Evidence alone must not create or modify Owner intent.
 
 ## Knowledge Categories
 
@@ -49,7 +52,7 @@ Rules used by the Owner to make decisions.
 
 ### Strategic Vision
 
-Long-term direction of AI Company OS.
+Long-term direction of KAVORA and Owner-confirmed direction for AI Company OS.
 
 ### Priorities
 
@@ -61,11 +64,11 @@ Chronological record of significant changes in Owner thinking.
 
 ## Update Workflow
 
-Executive Interview
+Owner-confirmed Source
 
 ↓
 
-Strategic Insight Report
+Knowledge Normalization
 
 ↓
 
@@ -83,10 +86,10 @@ Repository Registration
 
 Every update shall reference:
 
-- Executive Interview
-- Strategic Insight Report
-- Related Decision
-- Related Case
+- Applicable Owner-confirmed Source
+- Related Owner Directive or Decision
+- Related Case or Artifact
+- Supporting Evidence, when used
 
 ## Governance
 
@@ -94,4 +97,3 @@ This specification follows:
 
 - Knowledge Repository Standard v1.0
 - Executive Learning Framework v1.0
-

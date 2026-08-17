@@ -12,7 +12,7 @@ approval_authority: CEO
 
 ## Purpose
 
-Define how AI Company OS preserves, recovers, and continuously evolves organizational knowledge independently of chat history.
+Define how KAVORA organizational knowledge is preserved, recovered, and continuously evolved through AI Company OS independently of chat history, while separating Role Runtime Recovery from Organizational Knowledge Recovery.
 
 ## Principles
 
@@ -24,33 +24,45 @@ Define how AI Company OS preserves, recovers, and continuously evolves organizat
 
 ## Repository Role
 
-Repository is the permanent organizational memory.
+The AI Company OS Repository is the permanent repository for approved KAVORA organizational knowledge.
 
 Chats are temporary execution environments.
 
-## Recovery Goal
+## Recovery Concerns
 
-Executive knowledge must be recoverable using only the Repository.
+### Role Runtime Recovery
+
+The Role Runtime Source is the current Project Instructions Embedded Role Profile, applied to the Role assigned by the Owner. The canonical Project Instructions filename is `PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt`.
+
+GitHub Role Profiles are the Canonical Archive and synchronization and recovery reference. Repository presence alone does not activate a Role Profile as runtime context.
+
+If Role Runtime cannot be established or validated, the Executive Chat must enter Role Hold.
+
+### Organizational Knowledge Recovery
+
+Organizational Knowledge Recovery restores approved KAVORA knowledge from the AI Company OS Repository.
+
+Recovered organizational knowledge cannot assign a Role or define, extend, or modify Role Identity, Authority, Responsibilities, or Prohibited Actions.
 
 ## Recovery Workflow
 
-Repository
+Establish Role Runtime
 
 ↓
 
-Bootstrap Context
+Validate Role Identity and Authority
 
 ↓
 
-Executive Chat Initialization
+Retrieve Approved Organizational Knowledge
 
 ↓
 
-Knowledge Validation
+Reconstruct Decision Context
 
 ↓
 
-Operational Readiness
+Resume Role-bounded Operation
 
 ## Executive Interview Flow
 
@@ -109,4 +121,3 @@ Every knowledge update shall reference:
 ## Governance
 
 Knowledge Preservation follows Knowledge Repository Standard v1.0.
-

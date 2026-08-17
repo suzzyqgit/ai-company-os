@@ -12,7 +12,7 @@ approval_authority: CEO
 
 ## Purpose
 
-Define the standard for preserving, evolving, and recovering organizational knowledge within AI Company OS.
+Define the standard for preserving, evolving, and recovering KAVORA organizational knowledge within the AI Company OS Knowledge Layer.
 
 ## Principles
 
@@ -31,7 +31,9 @@ Chats are temporary workspaces.
 
 ## Single Source of Truth
 
-All approved knowledge shall be preserved in the Repository.
+Approved KAVORA organizational knowledge shall be preserved in the AI Company OS Repository as the durable Source of Truth.
+
+This does not make the Repository the runtime source of Role identity. The Role Runtime Source is the Project Instructions Embedded Role Profiles and is governed separately by the current Role Bootstrap and Role Lock controls.
 
 ## Knowledge Classification
 
@@ -105,18 +107,24 @@ Major.Minor
 
 ## Traceability
 
-Every knowledge update must reference
+Every knowledge update must reference the applicable source evidence and decision context, which may include:
 
-- Executive Interview
+- Owner or Executive Interview
+- Owner Directive
+- Approved Decision
 - Strategic Dialogue
-- Decision Report
-- Related Case
+- Customer, Revenue, Operational, or Validation Evidence
+- Verified External Evidence
+- Related Case or Artifact
+
+Not every source type is required. The references must be sufficient to trace the preserved knowledge to its actual evidence and decision context.
 
 ## Recovery Principle
 
-Repository must be sufficient to reconstruct Executive knowledge without relying on chat history.
+The AI Company OS Repository must be sufficient to reconstruct approved KAVORA organizational knowledge without relying on chat history.
+
+Organizational Knowledge Recovery does not establish or modify Role Runtime.
 
 ## Governance
 
-This standard is governed by Knowledge Governance v1.0.
-
+This standard operates under the current approved KAVORA / AI Company OS governance and the approval authority defined for this artifact.

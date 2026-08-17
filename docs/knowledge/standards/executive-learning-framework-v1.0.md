@@ -12,80 +12,55 @@ approval_authority: CEO
 
 ## Purpose
 
-Define the standard learning architecture for AI Company OS executives to continuously improve decision quality through structured knowledge acquisition.
+Executive Learning preserves reusable learning from KAVORA decisions, execution, evidence, and outcomes. AI Company OS is the internal platform used to preserve and retrieve that learning.
 
 ## Objectives
 
 - Improve executive decision quality
 - Continuously understand the Owner's management principles
 - Share strategic insights across executives
-- Preserve organizational learning in the Repository
+- Preserve KAVORA organizational learning in the AI Company OS Repository
 
-## Learning Components
+## Learning Sources
 
-### Executive Interview
+Executive Learning may be derived from:
 
-Purpose:
+- Executive or Owner Dialogue
+- Customer Evidence or Revenue Evidence
+- Operational Results or Validation Results
+- Review Findings
+- Approved Decisions
+- Verified External Evidence
 
-Understand the Owner's vision, philosophy, decision principles, priorities, and long-term strategy.
+A specific meeting, interview, or report format is not mandatory when the evidence and decision context are traceable.
 
-Output:
+## Promotion Boundary
 
-Strategic Insight Report
-
----
-
-### Strategic Dialogue
-
-Purpose:
-
-Enable executives to learn from each other's expertise and improve cross-functional decision quality.
-
-Output:
-
-Strategic Dialogue Report
-
----
-
-## Knowledge Integration
-
-Executive Interview
+Evidence
 
 ↓
 
-Strategic Insight Report
+Interpretation / Learning
 
 ↓
 
-Knowledge Review
+Review
 
 ↓
 
-Knowledge Repository
+Approval
 
 ↓
 
-Executive Knowledge Update
+Repository Preservation
 
----
+Evidence does not become approved organizational knowledge without review and approval.
 
-Strategic Dialogue
+## Role Boundary
 
-↓
+Executive Learning must not define, replace, extend, or override a Role's Identity, Authority, Responsibilities, or Prohibited Actions.
 
-Strategic Dialogue Report
-
-↓
-
-Knowledge Review
-
-↓
-
-Knowledge Repository
-
-↓
-
-Executive Knowledge Update
+Role Runtime and Role Profile controls govern Role behavior.
 
 ## Learning Principles
 
@@ -102,5 +77,4 @@ Executive Knowledge Update
 
 ## Governance
 
-Executive Learning is governed by Knowledge Governance v1.0.
-
+Executive Learning follows the Knowledge Repository Standard v1.0, the approval authority defined for this artifact, and the current approved KAVORA / AI Company OS governance.

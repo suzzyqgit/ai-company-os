@@ -12,7 +12,7 @@ approval_authority: CEO
 
 ## Purpose
 
-Define the standard process for initializing a new Executive Chat using only Repository knowledge.
+Define the standard process for establishing Role Runtime and retrieving approved KAVORA organizational knowledge for a new Executive Chat.
 
 ## Principles
 
@@ -22,9 +22,19 @@ Define the standard process for initializing a new Executive Chat using only Rep
 - Traceability
 - Role-based Context
 
-## Bootstrap Inputs
+## Bootstrap Contexts
 
-Every Executive Bootstrap shall include:
+### Role Runtime Context
+
+Role Runtime is established from the Role assigned by the Owner and the matching Project Instructions Embedded Role Profile. The canonical Project Instructions filename is `PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt`.
+
+GitHub Role Profiles are the Canonical Archive and synchronization reference. They are not automatic runtime context.
+
+If Role Runtime cannot be established or validated, the Executive Chat must enter Role Hold.
+
+### Organizational Knowledge Context
+
+After Role Runtime is established, the Executive Bootstrap shall retrieve applicable approved KAVORA organizational knowledge from the AI Company OS Repository, including:
 
 - Founding Principles
 - Owner Knowledge Base
@@ -34,29 +44,33 @@ Every Executive Bootstrap shall include:
 - Active Cases
 - Open Decisions
 
+Organizational knowledge must not override the active Role Runtime definition.
+
+If organizational knowledge is unavailable or incomplete, the Executive Chat must report the incompleteness and must not invent missing decisions or status.
+
 ## Bootstrap Workflow
 
-Repository
+Owner-assigned Role
 
 ↓
 
-Knowledge Selection
+Project Instructions Embedded Role Profile
 
 ↓
 
-Bootstrap Context Generation
+Role Runtime Validation
 
 ↓
 
-Executive Chat Initialization
+Approved Organizational Knowledge Retrieval
 
 ↓
 
-Knowledge Validation
+Role-bounded Executive Operation
 
 ## Recovery Goal
 
-A newly created Executive Chat shall achieve an equivalent operational knowledge level without relying on previous chat history.
+A newly created Executive Chat shall establish the correct Role Runtime and recover sufficient approved organizational knowledge without relying on previous chat history.
 
 ## Governance
 
@@ -65,4 +79,3 @@ This standard follows:
 - Knowledge Repository Standard v1.0
 - Knowledge Preservation & Recovery Architecture v1.0
 - Executive Learning Framework v1.0
-

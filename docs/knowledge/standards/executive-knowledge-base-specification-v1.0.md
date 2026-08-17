@@ -12,7 +12,7 @@ approval_authority: CEO
 
 ## Purpose
 
-Define the structure for preserving and evolving executive-specific knowledge within AI Company OS.
+Define the structure for preserving KAVORA business knowledge, decision context, and reusable executive learning within AI Company OS, the internal platform and Repository used for preservation and retrieval.
 
 ## Scope
 
@@ -26,21 +26,34 @@ Each Executive Knowledge Base shall preserve:
 - Cross-Executive Learnings
 - Improvement Opportunities
 
+## Role Responsibility Boundary
+
+Any Role Responsibilities described in the Executive Knowledge Base are contextual operating knowledge only. They do not define, replace, extend, or override the Role's Identity, Authority, Responsibilities, or Prohibited Actions.
+
+At runtime, Role definition is supplied by the Project Instructions Embedded Role Profile. GitHub Role Profiles serve as the Canonical Archive and synchronization reference under the current Role governance.
+
+If Executive Knowledge conflicts with the active Role Runtime definition, the Role Runtime definition governs Role behavior and the knowledge conflict must be reviewed rather than silently merged.
+
 ## Knowledge Sources
 
-Knowledge may be updated only from:
+Executive Knowledge may be updated from applicable evidence and decision context, including:
 
-- Executive Interview
-- Strategic Dialogue
-- Decision Report
-- Approved Architecture
+- Executive or Owner Dialogue
 - Owner Directive
+- Approved Decision or Decision Report
+- Approved Architecture
+- Customer Evidence or Revenue Evidence
+- Operational Results or Validation Results
+- Review Findings
+- Verified External Evidence
+
+Each update must remain traceable to its actual source and approval context.
 
 ## Knowledge Categories
 
 ### Executive Responsibilities
 
-Responsibilities assigned to the executive.
+Contextual operating knowledge about executive responsibilities, subject to the Role Responsibility Boundary.
 
 ### Owner Understanding
 
@@ -76,12 +89,7 @@ Repository Registration
 
 ## Traceability
 
-Every update shall reference:
-
-- Related Executive
-- Related Report
-- Related Decision
-- Related Case
+Every update shall reference the applicable source evidence and decision context, including the related Executive, Decision, Case, Report, or Artifact when relevant.
 
 ## Governance
 
@@ -90,4 +98,3 @@ This specification follows:
 - Knowledge Repository Standard v1.0
 - Executive Learning Framework v1.0
 - Owner Knowledge Base Specification v1.0
-
