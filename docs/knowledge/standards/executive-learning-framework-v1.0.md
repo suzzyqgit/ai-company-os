@@ -2,7 +2,7 @@
 artifact_id: KNOWLEDGE-FRAMEWORK-001
 title: Executive Learning Framework
 version: 1.0
-status: Draft
+status: Approved
 case: CASE-0008
 owner: Chief AI Architect
 approval_authority: CEO

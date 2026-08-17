@@ -2,7 +2,7 @@
 artifact_id: KNOWLEDGE-SPEC-002
 title: Executive Knowledge Base Specification
 version: 1.0
-status: Draft
+status: Approved
 case: CASE-0008
 owner: Chief AI Architect
 approval_authority: CEO

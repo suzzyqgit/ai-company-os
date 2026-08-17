@@ -2,7 +2,7 @@
 artifact_id: KNOWLEDGE-STD-001
 title: Knowledge Repository Standard
 version: 1.0
-status: Draft
+status: Approved
 case: CASE-0008
 owner: Chief AI Architect
 approval_authority: CEO
