@@ -58,14 +58,15 @@ knowledge-repository-standard-v1.0.md
 
 ## Metadata Standard
 
-Every knowledge artifact shall contain
+Every knowledge artifact shall contain the following required metadata:
 
 - title
 - version
 - owner
 - status
 - approval authority
-- related artifacts
+
+Related artifacts shall be included when applicable.
 
 ## Ownership
 
