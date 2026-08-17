@@ -84,12 +84,15 @@ Repository Registration
 
 ## Traceability
 
-Every update shall reference:
+Every update shall be traceable to an Owner-confirmed source and sufficient decision and evidence context.
 
-- Applicable Owner-confirmed Source
-- Related Owner Directive or Decision
+Traceability may include, when applicable:
+
+- Owner Directive or Decision
 - Related Case or Artifact
-- Supporting Evidence, when used
+- Supporting Evidence
+
+No specific artifact type is required for every update.
 
 ## Governance
 

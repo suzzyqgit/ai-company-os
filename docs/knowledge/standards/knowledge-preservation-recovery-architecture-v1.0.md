@@ -112,11 +112,17 @@ All knowledge artifacts must maintain version history.
 
 ## Traceability
 
-Every knowledge update shall reference:
+Every knowledge update shall provide sufficient traceability to the applicable source evidence and decision context.
+
+Traceability may include, when applicable:
 
 - Related Case
 - Related Report
 - Source Learning Activity
+- Related Decision
+- Related Artifact
+
+No specific source or artifact type is required for every update.
 
 ## Governance
 

@@ -73,7 +73,7 @@ Knowledge ownership shall be explicitly assigned.
 
 ## Update Workflow
 
-Interview
+Source Evidence / Knowledge Source
 
 ↓
 
