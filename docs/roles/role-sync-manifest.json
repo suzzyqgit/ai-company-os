@@ -3,7 +3,7 @@
   "artifact_id": "ROLE-SYNC-001",
   "release": "role-lock-v1.1",
   "status": "Pre-Freeze",
-  "generated_at": "2026-08-18T16:30:50+09:00",
+  "generated_at": "2026-08-18T17:00:54+09:00",
   "sync_rule": "GitHub canonical organization context and role profiles, and Project Instructions embedded organization context and role profiles, must change in the same change set.",
   "files": {
     "docs/roles/ceo.md": "5765fdce917673862d4b9ef089bcf19ad0d22e350609171210c44806d287569a",
@@ -14,7 +14,7 @@
     "docs/roles/role-registry.yaml": "d447bdf1ac88a1bf6eb8f9ac98808c30fa86926ee61fe207d6fbd1f11037c168",
     "PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt": "a744bc768026ea60053db4ebff40a7ae798c56a82eb01e26578aa9f3d451864c"
   },
-  "runtime_repository_parity": "Not Established",
+  "runtime_repository_parity": "Established",
   "github_registration": "Completed",
   "remote_verification": "Completed through evidence registration commit",
   "formal_acceptance": "Incomplete",
@@ -35,9 +35,9 @@
     "sha256": "a1f77caec6ddc042b7ca3453dcab14fe8f9dc74b7e5ef2600371280b69c0d111"
   },
   "organization_naming_change_set": "Applied in containing Repository commit / Remote verification pending",
-  "runtime_project_instructions_install": "Pending for abolished-role correction; prior content was Owner Confirmed",
-  "final_validation": "Pending",
+  "runtime_project_instructions_install": "Owner Confirmed",
+  "final_validation": "Pass",
   "freeze_decision": "Not Executed",
   "frozen": false,
-  "runtime_installation_confirmation_at": "2026-08-04T00:23:46+09:00"
+  "runtime_installation_confirmation_at": "2026-08-18T17:00:54+09:00"
 }
