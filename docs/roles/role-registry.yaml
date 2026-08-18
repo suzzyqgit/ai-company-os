@@ -34,8 +34,6 @@ roles:
   Chief Software Engineer:
     aliases: [エンジニア]
     profile: docs/roles/chief-software-engineer.md
-  CBU:
-    profile: docs/roles/cbu.md
 
 runtime_controls:
   pre_response_role_check:

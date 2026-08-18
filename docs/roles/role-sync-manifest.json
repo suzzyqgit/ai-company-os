@@ -3,17 +3,16 @@
   "artifact_id": "ROLE-SYNC-001",
   "release": "role-lock-v1.1",
   "status": "Pre-Freeze",
-  "generated_at": "2026-08-04T00:23:46+09:00",
+  "generated_at": "2026-08-18T16:30:50+09:00",
   "sync_rule": "GitHub canonical organization context and role profiles, and Project Instructions embedded organization context and role profiles, must change in the same change set.",
   "files": {
-    "docs/roles/ceo.md": "ed3709d800ff5282b36ee0c522741bc79b774410111a568ee1e01eaf001d9c93",
+    "docs/roles/ceo.md": "5765fdce917673862d4b9ef089bcf19ad0d22e350609171210c44806d287569a",
     "docs/roles/cpo.md": "54beeb6326181c8e91eaef336b0f99b9f39acd5ec2f7d5506e2e689df2a08a33",
-    "docs/roles/cmo.md": "e553e4a858c1f29c08613bb419b312a0b107a8cc686c7f5ec525f64f6615c752",
+    "docs/roles/cmo.md": "a5b876fc663c8a304159d6d012705fc71e975d774562efeeabf395f29e152177",
     "docs/roles/chief-ai-architect.md": "2f4124f70b2251ed25a9c2eee23dd630e7f2a60dbaa90e11bc75c289a24d9397",
     "docs/roles/chief-software-engineer.md": "21c5f389cfa8dc62d2a29360ab7804f394a2c3a5add77abce1b55ab4dfaf36bd",
-    "docs/roles/cbu.md": "8a97d2873878a6d1ee1321da915821cdef35214cc8fde5c9ed162fe7f399a157",
-    "docs/roles/role-registry.yaml": "c9603561c9f412fe18c8694114776bdd72d4c3368178de390865b2c11e1c1f77",
-    "PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt": "df1429747bfa6e89ddb0cbdcf26104596b7b116e3591a2e3a37f8d3b21dc473b"
+    "docs/roles/role-registry.yaml": "d447bdf1ac88a1bf6eb8f9ac98808c30fa86926ee61fe207d6fbd1f11037c168",
+    "PROJECT_INSTRUCTIONS_ROLE_LOCK_v1.1.txt": "a744bc768026ea60053db4ebff40a7ae798c56a82eb01e26578aa9f3d451864c"
   },
   "runtime_repository_parity": "Not Established",
   "github_registration": "Completed",
@@ -36,7 +35,7 @@
     "sha256": "a1f77caec6ddc042b7ca3453dcab14fe8f9dc74b7e5ef2600371280b69c0d111"
   },
   "organization_naming_change_set": "Applied in containing Repository commit / Remote verification pending",
-  "runtime_project_instructions_install": "Owner Confirmed",
+  "runtime_project_instructions_install": "Pending for abolished-role correction; prior content was Owner Confirmed",
   "final_validation": "Pending",
   "freeze_decision": "Not Executed",
   "frozen": false,

@@ -29,6 +29,9 @@ supersedes: chat-scoped-role-lock-standard-v1.0.md
 - Role Assignment、Authority、Responsibilities、Prohibited Actions、Owner最終権限は名称変更によって変わらない。
 - 組織レベルの状態・Priority・Portfolio・Case・利益はKAVORAとして扱う。
 - Runtime、Role、Contract、Governance、Repository、Operational Data Layer等の内部基盤はAI Company OSとして扱う。
+- Owner Decisionにより旧Business Execution Roleは廃止済みであり、現在の有効Roleではない。
+- DXおよびDX2は役員Roleではなく、DX Execution用の作業Chatである。
+- 廃止された旧RoleのAuthorityおよびResponsibilitiesは、DXまたはDX2へ自動継承されない。
 
 ## 2. Canonical Roles
 
@@ -37,7 +40,6 @@ supersedes: chat-scoped-role-lock-standard-v1.0.md
 - CMO
 - Chief AI Architect（チーフ）
 - Chief Software Engineer（エンジニア）
-- CBU
 
 `v2`、`v3`等はOwnerのチャット管理番号であり、Role Versionではない。
 
