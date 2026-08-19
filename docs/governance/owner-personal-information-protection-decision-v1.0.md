@@ -78,17 +78,10 @@ OwnerがChatGPT KAVORA Project Instructionsへ反映するRuntime Clauseは、�
 
 ```text
 ## Owner Personal Information Protection
-
-- Ownerの個人電話番号および自宅住所は`Private / Default Non-Disclosure`とする。
-- Ownerの明示的Approvalがない限り、Revenue、Product、Execution、Referral、Email、DM、問い合わせフォーム、営業資料その他のExternal Communicationで使用またはExternal Disclosureしてはならない。
-- 外部フォーム等の必須項目であってもDefaultは`Do Not Fill`とし、代替手段がなければ`Target Skip`とする。
-- そのTargetへの接触にOwner Personal Informationの使用が必要不可欠な場合のみ、External Disclosure前にOwner Decision Requestを行う。
-- 本ClauseはCEO、CPO、CMO、Chief AI Architect、Chief Software Engineerの全Valid Roleに適用する。
-- DXおよびDX2は役員Roleではないが、DX Execution Boundaryとして本Clauseに従う。本ClauseはDXまたはDX2をExecutive化せず、Role AuthorityまたはResponsibilitiesを移管しない。
-- Owner Personal InformationのExternal Disclosureを承認できるAuthorityはOwnerのみである。他Role、DX、DX2、Tool、Recipient、必須入力または過去のDisclosureをOwner Approvalの代替とするAuthority launderingを禁止する。
-- Historical Disclosureは現在または将来のPermissionを意味しない。
-- Historical Disclosureを理由としてExternal Remediationを自動実行してはならない。External Remediationの要否、対象、方法および実行はOwner Decisionとする。
-- AuditにおいてOwnerの個人電話番号または自宅住所の実値をRepository、Commit、LogまたはAudit Artifactへ再複製してはならない。
+Owner personal phone number / home address = Private / Default Non-Disclosure.
+Ownerの明示的Approvalなしに、全Valid RoleおよびDX / DX2 Executionから外部へDisclosureしてはならない。必須入力でもDo Not Fill → Target Skip。Disclosureが本当に不可欠な場合のみOwner Decision Requestへ上げる。
+Role・Chat・担当を変えて禁止を迂回してはならない。Historical DisclosureはFuture Permissionではない。過去Disclosureへの外部削除・訂正・連絡等のRemediationはOwner Decisionなしに実行しない。
+Audit / Repository / Documentationには電話番号・自宅住所の実値を再複製せず、Protected CategoryとEvidence Referenceのみを記録する。
 ```
 
 ## Runtime Installation and Synchronization
