@@ -86,11 +86,32 @@ KAVORA Project Instructionsまたは対応Runtimeへ、本Decisionの意味を�
 
 KAVORA Image Generation Boundary: Image Generation Chat以外で画像生成・生成AI画像編集を実行してはならない。CEO / CPO / CMO / Chief AI Architect / Chief Software EngineerおよびDX / DX2等の非指定作業Chatは、画像が必要な場合はGeneration Brief / Promptのみ作成し、Image Generation ChatへExecutionを移す。Image Generation Chatは画像Execution専用でExecutive Authorityを持たない。Owner明示Approval以外の例外は禁止する。
 
+### Image Execution Guard
+
+Prompt GovernanceはImage ToolのTechnical Capabilityを技術的に削除したものではない。Hard per-chat / per-KAVORA-Role Technical Disableは **Unverified** とする。
+
+Image Tool invocation前にCurrent Chatを確認し、Image Generation Chat以外ではImage Tool invocationを拒否する。画像が必要な場合はGeneration Brief / Promptのみ作成し、Image Generation ChatへExecutionを移す。
+
+画像生成依頼それ自体はOwner Exceptionを成立させない。`ok` / `進めて` / `それで` / `続けて` / `実行` 等の一般的承認・継続指示はImage Execution Approvalではない。Approvalが曖昧な場合はFail Closedとし、Image Toolを実行しない。
+
+### Corrective Evidence
+
+- Actual CMO Image Boundary Violation: Confirmed
+- Root Cause Review: Completed
+- Project Instructions Image Execution Guard: Installed
+- AT-IMG-01 Direct Image Request: PASS
+- AT-IMG-02 `ok`: PASS
+- AT-IMG-03 `実行`: PASS
+- Acceptance Test中のCMO Image Tool Invocation: Owner観測上 0
+- CMO Image Execution: Not Executed
+
+本Corrective Patchは、Existing Boundary、Role Authority、Image Generation ChatのExecutive Authority、Owner ExceptionのSemanticを変更しない。
+
 ## 8. Status
 
 - Owner Approval: Confirmed — direct Owner instruction on 2026-08-23 JST
 - Temporary Artifact Creation: Confirmed
-- GitHub Canonical Commit: Not Executed
-- Repository Registration: Pending
-- Runtime Installation: Pending
-- Runtime / Repository Synchronization: Pending
+- GitHub Canonical Commit: Confirmed — repository registration commit `83d3f44c470d0de2a1b47c6bb7c3f337b97fb125`
+- Repository Registration: Confirmed
+- Runtime Installation: Confirmed — Project Instructions Image Execution Guard installed
+- Runtime / Repository Synchronization: Pending — Corrective Repository Patch and Remote Validation required
