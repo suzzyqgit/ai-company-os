@@ -207,22 +207,28 @@ model ArticleAccessImportItem {
 }
 
 model ImportRun {
-  id              String               @id @default(cuid())
-  status          String
-  startedAt       DateTime             @default(now())
-  completedAt     DateTime?
-  importedAt      DateTime
-  importedBy      String
-  pipelineVersion String
-  summaryJson     String?
-  error           String?
-  importMode      ImportMode           @default(DRY_RUN)
-  approvalStatus  ImportApprovalStatus @default(PENDING)
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  reviewReason    String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  id                              String               @id @default(cuid())
+  status                          String
+  startedAt                       DateTime             @default(now())
+  completedAt                     DateTime?
+  importedAt                      DateTime
+  importedBy                      String
+  pipelineVersion                 String
+  summaryJson                     String?
+  error                           String?
+  importMode                      ImportMode           @default(DRY_RUN)
+  approvalStatus                  ImportApprovalStatus @default(PENDING)
+  reviewedAt                      DateTime?
+  reviewedBy                      String?
+  reviewReason                    String?
+  approvalFingerprint             String?
+  approvalFingerprintVersion      String?
+  approvalDecisionRef             String?
+  approvalAuthorityRole           String?
+  approvalAuthorityEvidenceDigest String?
+  approvalVerifierId              String?
+  createdAt                       DateTime             @default(now())
+  updatedAt                       DateTime             @updatedAt
 
   sources               ImportSource[]
   snapshots             Snapshot[]
@@ -235,19 +241,25 @@ model ImportRun {
 }
 
 model ImportSource {
-  id             String               @id @default(cuid())
-  importRunId    String
-  sourceType     String
-  sourceFile     String
-  sourceHash     String
-  parserVersion  String
-  confidence     Float?
-  metadataJson   String
-  approvalStatus ImportApprovalStatus @default(PENDING)
-  reviewedAt     DateTime?
-  reviewedBy     String?
-  reviewReason   String?
-  createdAt      DateTime             @default(now())
+  id                              String               @id @default(cuid())
+  importRunId                     String
+  sourceType                      String
+  sourceFile                      String
+  sourceHash                      String
+  parserVersion                   String
+  confidence                      Float?
+  metadataJson                    String
+  approvalStatus                  ImportApprovalStatus @default(PENDING)
+  reviewedAt                      DateTime?
+  reviewedBy                      String?
+  reviewReason                    String?
+  approvalFingerprint             String?
+  approvalFingerprintVersion      String?
+  approvalDecisionRef             String?
+  approvalAuthorityRole           String?
+  approvalAuthorityEvidenceDigest String?
+  approvalVerifierId              String?
+  createdAt                       DateTime             @default(now())
 
   importRun             ImportRun              @relation(fields: [importRunId], references: [id], onDelete: Cascade)
   snapshots             Snapshot[]
@@ -259,36 +271,42 @@ model ImportSource {
 }
 
 model CanonicalSalesRecord {
-  id                    String               @id @default(cuid())
-  importRunId           String
-  importSourceId        String
-  businessKey           String
-  sourceHash            String
-  schemaVersion         String
-  parserVersion         String
-  saleDate              DateTime
-  productName           String
-  originalProductName   String
-  normalizedProductName String
-  candidateArticleId    String?
-  candidateProductId    String?
-  matchConfidence       Float?
-  quantity              Int
-  grossAmount           Int
-  netAmount             Int?
-  currency              String
-  platform              String
-  source                String
-  confidence            Float
-  approvalStatus        ImportApprovalStatus @default(PENDING)
-  validationJson        String
-  importedAt            DateTime
-  importedBy            String
-  reviewedAt            DateTime?
-  reviewedBy            String?
-  reviewReason          String?
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  id                              String               @id @default(cuid())
+  importRunId                     String
+  importSourceId                  String
+  businessKey                     String
+  sourceHash                      String
+  schemaVersion                   String
+  parserVersion                   String
+  saleDate                        DateTime
+  productName                     String
+  originalProductName             String
+  normalizedProductName           String
+  candidateArticleId              String?
+  candidateProductId              String?
+  matchConfidence                 Float?
+  quantity                        Int
+  grossAmount                     Int
+  netAmount                       Int?
+  currency                        String
+  platform                        String
+  source                          String
+  confidence                      Float
+  approvalStatus                  ImportApprovalStatus @default(PENDING)
+  validationJson                  String
+  importedAt                      DateTime
+  importedBy                      String
+  reviewedAt                      DateTime?
+  reviewedBy                      String?
+  reviewReason                    String?
+  approvalFingerprint             String?
+  approvalFingerprintVersion      String?
+  approvalDecisionRef             String?
+  approvalAuthorityRole           String?
+  approvalAuthorityEvidenceDigest String?
+  approvalVerifierId              String?
+  createdAt                       DateTime             @default(now())
+  updatedAt                       DateTime             @updatedAt
 
   importRun    ImportRun    @relation(fields: [importRunId], references: [id], onDelete: Cascade)
   importSource ImportSource @relation(fields: [importSourceId], references: [id], onDelete: Cascade)

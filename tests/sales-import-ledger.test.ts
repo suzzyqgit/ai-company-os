@@ -145,7 +145,7 @@ test("is idempotent by ImportSourceID + BusinessKey + SourceHash", async () => {
   assert.equal(await prisma.canonicalSalesRecord.count(), 1);
 });
 
-test("maintains the approval flow and exposes only APPROVED records", async () => {
+test("fails closed when the legacy direct approval transition is called", async () => {
   const { run, source } = await createTraceability();
   const persisted = await persistSalesImportLedger({
     prisma,
@@ -156,32 +156,21 @@ test("maintains the approval flow and exposes only APPROVED records", async () =
   const recordId = persisted.createdIds[0];
 
   assert.deepEqual(await getApprovedSalesImportRecords({ prisma }), []);
-  await transitionSalesImportApproval({
-    prisma,
-    recordId,
-    to: ImportApprovalStatus.REVIEW_REQUIRED,
-    reviewedBy: "reviewer",
-    reason: "manual_confirmation_required",
-  });
-  const approved = await transitionSalesImportApproval({
-    prisma,
-    recordId,
-    to: ImportApprovalStatus.APPROVED,
-    reviewedBy: "reviewer",
-  });
-
-  assert.equal(approved.approvalStatus, ImportApprovalStatus.APPROVED);
-  assert.equal((await getApprovedSalesImportRecords({ prisma })).length, 1);
   await assert.rejects(
     transitionSalesImportApproval({
       prisma,
       recordId,
-      to: ImportApprovalStatus.REJECTED,
-      reviewedBy: "reviewer",
-      reason: "terminal_state",
+      to: ImportApprovalStatus.APPROVED,
+      reviewedBy: "CEO",
     }),
-    /Invalid approval transition/,
+    /Direct Sales Import approval transition is disabled/,
   );
+  const unchanged = await prisma.canonicalSalesRecord.findUniqueOrThrow({
+    where: { id: recordId },
+  });
+  assert.equal(unchanged.approvalStatus, ImportApprovalStatus.PENDING);
+  assert.equal(unchanged.reviewedBy, null);
+  assert.deepEqual(await getApprovedSalesImportRecords({ prisma }), []);
 });
 
 test("routes invalid records to review and prevents their approval", async () => {
@@ -198,15 +187,6 @@ test("routes invalid records to review and prevents their approval", async () =>
   });
 
   assert.equal(record.approvalStatus, ImportApprovalStatus.REVIEW_REQUIRED);
-  await assert.rejects(
-    transitionSalesImportApproval({
-      prisma,
-      recordId: record.id,
-      to: ImportApprovalStatus.APPROVED,
-      reviewedBy: "reviewer",
-    }),
-    /cannot be APPROVED/,
-  );
   assert.equal(
     (await getApprovedSalesImportRecords({ prisma })).length,
     0,

@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import {
   ImportApprovalStatus,
-  type CanonicalSalesRecord,
   type PrismaClient,
 } from "@prisma/client";
 import {
@@ -174,70 +173,18 @@ export async function persistSalesImportLedgerInTransaction({
   return { createdIds, existingIds };
 }
 
-const allowedTransitions: Record<ImportApprovalStatus, ImportApprovalStatus[]> = {
-  PENDING: [
-    ImportApprovalStatus.REVIEW_REQUIRED,
-    ImportApprovalStatus.APPROVED,
-    ImportApprovalStatus.REJECTED,
-  ],
-  REVIEW_REQUIRED: [
-    ImportApprovalStatus.APPROVED,
-    ImportApprovalStatus.REJECTED,
-  ],
-  APPROVED: [],
-  REJECTED: [],
-};
-
-export async function transitionSalesImportApproval({
-  prisma,
-  recordId,
-  to,
-  reviewedBy,
-  reason,
-  reviewedAt = new Date(),
-}: {
+export async function transitionSalesImportApproval(request: {
   prisma: PrismaClient;
   recordId: string;
   to: ImportApprovalStatus;
   reviewedBy: string;
   reason?: string;
   reviewedAt?: Date;
-}): Promise<CanonicalSalesRecord> {
-  if (!reviewedBy.trim()) throw new Error("reviewedBy is required");
-
-  return prisma.$transaction(async (transaction) => {
-    const record = await transaction.canonicalSalesRecord.findUnique({
-      where: { id: recordId },
-    });
-    if (!record) throw new Error("Canonical Sales Record not found");
-    if (!allowedTransitions[record.approvalStatus].includes(to)) {
-      throw new Error(
-        `Invalid approval transition: ${record.approvalStatus} -> ${to}`,
-      );
-    }
-
-    const validation = JSON.parse(record.validationJson) as { ok?: boolean };
-    if (to === ImportApprovalStatus.APPROVED && validation.ok !== true) {
-      throw new Error("Invalid Canonical Sale cannot be APPROVED");
-    }
-    if (
-      (to === ImportApprovalStatus.REJECTED ||
-        to === ImportApprovalStatus.REVIEW_REQUIRED) &&
-      !reason?.trim()
-    ) {
-      throw new Error("A review reason is required");
-    }
-
-    return transaction.canonicalSalesRecord.update({
-      where: { id: recordId },
-      data: {
-        approvalStatus: to,
-        reviewedAt,
-        reviewedBy,
-        reviewReason: reason?.trim() || null,
-      },
-    });
-  });
+}): Promise<never> {
+  void request;
+  throw new Error(
+    "Direct Sales Import approval transition is disabled; use the bounded approval lifecycle",
+  );
 }
 
 export function getApprovedSalesImportRecords({
