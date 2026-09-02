@@ -1,7 +1,7 @@
 ---
 artifact_id: VAL-CEG-02-REAL-ODL-001
 title: CEG-02 Real ODL Evidence Authenticity Validation
-version: 1.2
+version: 1.3
 status: OPEN / BLOCKED
 lifecycle: Validation Incomplete
 artifact_type: Validation Record
@@ -35,11 +35,11 @@ Persistent approval follows this order:
 
 The canonical persistent `ImportRun.status` values are exactly `completed`, `failed`, and `review_required`. No case or whitespace normalization is permitted. `COMPLETED` and `REVIEW_REQUIRED` remain DRY_RUN report-local readiness vocabulary and are not interpreted as persistent status values.
 
-Each transition requires a freshly recomputed deterministic fingerprint of the exact current Run, ordered Sources, ordered Records, source and import provenance, business keys, canonical content digests, validation digests and results, approval states, readiness result, and fingerprint/canonicalization versions.
+One CEO batch decision binds one immutable v3 Approval Manifest for the exact Run, ordered Sources, ordered Records, business and provenance digests, validation/readiness evidence, exact membership and counts, static initial-state constraints, and the full `Records -> Sources -> Run` transition plan. Approval and audit values are excluded from the immutable business-state portion, so authorized transitions do not change the Manifest fingerprint.
 
-A mismatch fails before any approval write. Each approved object preserves the pre-transition fingerprint, decision reference, verified authority role, authority evidence digest, verifier identity, reviewer identity, review time, and reason.
+Before every transition, the implementation proves the current business state still matches the approved Manifest, validates the same decision and Manifest bindings, checks the actual approval-state vector against the expected sequence position, and compares the caller's Transition-State concurrency fingerprint. A mismatch fails before any approval write. Each approved object preserves the immutable Manifest fingerprint, one batch decision reference, verified authority role, authority evidence digest, verifier identity, reviewer identity, review time, and reason.
 
-The approved schema contract uses the existing six nullable approval audit fields only. `approvalFingerprintVersion` stores an immutable Approval Fingerprint Contract Version, not a free-standing implementation revision. Current contract `sales-import-approval-sha256-canonical-json-v2` uniquely binds SHA-256, deterministic `sales-import-approval-canonical-json-v2` canonicalization, exact lowercase persistent Run-status semantics, and corrected readiness interpretation. Algorithm, canonicalization version, persistent status contract, and readiness contract version are explicit in the canonical fingerprint input. The v1 identifier may be recognized as historical pre-correction evidence but cannot authorize a new approval transition.
+The approved schema contract uses the existing six nullable approval audit fields only. `approvalFingerprint` now means the immutable CEO Approval Manifest fingerprint, and `approvalFingerprintVersion` stores `sales-import-approval-manifest-sha256-canonical-json-v3`. Manifest canonicalization is `sales-import-approval-manifest-canonical-json-v3`. Transition-State uses `sales-import-approval-transition-state-sha256-canonical-json-v3` with `sales-import-approval-transition-state-canonical-json-v3`. v1 and v2 identifiers remain historical evidence only and cannot authorize a v3 transition.
 
 `approvalVerifierId` is an immutable, versioned verifier implementation identifier using the `name-vN` form. It is accepted only from the authority verifier, persisted on the first successful transition, and not rewritten by idempotent re-entry.
 
@@ -47,14 +47,21 @@ The approved schema contract uses the existing six nullable approval audit field
 
 CEO is the approval authority. Caller-provided role names, reviewer names, booleans, and arbitrary decision references are not authorization.
 
-The bounded lifecycle accepts an authority verifier supplied by trusted runtime composition. Isolated tests use a fixture verifier with an explicit decision-to-target-and-fingerprint binding. No trustworthy production runtime CEO identity/evidence binding currently exists, so the production verifier remains unavailable and fails closed.
+The bounded lifecycle accepts an authority verifier supplied by trusted runtime composition. Isolated tests bind one fixture decision to the exact ImportRun and immutable Manifest; every technical transition re-verifies that same decision without creating per-row CEO decisions. No trustworthy production runtime CEO identity/evidence binding currently exists, so the production verifier remains unavailable and fails closed.
 
 `RUNTIME CEO AUTHORITY BINDING: UNRESOLVED`
 
 ## Validation Evidence
 
-- Isolated bounded lifecycle tests: 21 cases PASS
+- Isolated bounded lifecycle tests: 31 cases PASS
 - Existing Sales Import Ledger regression: 6 cases PASS
+- One batch Decision Ref across Record, Source, and Run transitions: PASS
+- Immutable Manifest stability across all authorized transitions: PASS
+- Transition-State progression and per-transition concurrency fingerprint: PASS
+- Exact membership, business-content, SourceHash, status-vector, Decision Ref, and Manifest drift rejection: PASS
+- Interrupted batch continuation and idempotent retry under the same decision: PASS
+- Interrupted batch verifier identity drift: rejected
+- Exact prior real v2 fingerprint as v3 authorization input: rejected
 - Persistent `completed`, `failed`, `review_required`, and noncanonical `COMPLETED` gates: PASS
 - Approval Fingerprint Contract v1 as new authorization input: rejected with zero approval writes
 - Data Layer Promotion persistent status predicate: exact `completed` accepted; `COMPLETED` rejected
@@ -73,9 +80,16 @@ The bounded lifecycle accepts an authority verifier supplied by trusted runtime 
 
 Repository-wide validation results are reported with the implementation evidence package and are not inferred by this artifact.
 
+## Execution Evidence Boundary
+
+Each bounded transition returns structured evidence containing the Decision Ref, Manifest fingerprint, target, sequence, before and after Transition-State fingerprints, and result. This evidence is not persisted by overloading unrelated fields. No seventh canonical approval column is introduced.
+
+Durable Transition-State evidence cannot be added under the current approved schema without a separate schema decision. Before any real approval requiring durable transition evidence, a Schema-Specific Decision Request is required.
+
 ## Real ODL Boundary
 
 - Fresh read-only v2 fingerprint: `1ac00d3f8c72f1753c11e8abddcbd2054334a807828f99f514ea6338cc8cc1ae`
+- v2 authorization status under v3: Historical evidence only; explicitly rejected
 - Historical pre-correction v1 fingerprint reference: `0ba3fb09c6a206eed802b6c0506ab5299a68b2134b35bdc75c5880051a958bbd`
 - ImportRun: `cmryhc9n70000bh8bgi7brnnr`, raw status `completed`, approval status `PENDING`
 - Population: 8 Sources and 216 Canonical Sales Records

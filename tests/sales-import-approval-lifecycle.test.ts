@@ -6,23 +6,27 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { ImportApprovalStatus, PrismaClient } from "@prisma/client";
 import {
-  buildSalesImportApprovalFingerprint,
-  canonicalPersistentImportRunStatusContract,
+  buildSalesImportApprovalManifest,
+  buildSalesImportApprovalTransitionState,
   createSalesImportApprovalLifecycle,
-  historicalSalesImportApprovalFingerprintContractVersionV1,
-  salesImportApprovalCanonicalizationVersion,
-  salesImportApprovalFingerprintAlgorithm,
-  salesImportApprovalFingerprintContractVersion,
-  salesImportApprovalReadinessContractVersion,
+  historicalSalesImportApprovalFingerprintContractVersionV2,
+  salesImportApprovalManifestCanonicalizationVersion,
+  salesImportApprovalManifestContractVersion,
+  salesImportApprovalTransitionStateCanonicalizationVersion,
+  salesImportApprovalTransitionStateContractVersion,
   unavailableRuntimeCeoAuthorityVerifier,
   type SalesImportApprovalAuthorityVerifier,
-  type SalesImportApprovalTarget,
+  type SalesImportApprovalManifest,
+  type SalesImportApprovalRequest,
+  type SalesImportApprovalTransitionPlanEntry,
   type SalesImportAuthorityVerificationRequest,
 } from "../features/imports/import-pipeline/index.ts";
 
 let prisma: PrismaClient;
 let cleanupDatabase: () => Promise<void>;
 
+const decisionRef = "DEC-SALES-BATCH-001";
+const authorityEvidence = "fixture-evidence:DEC-SALES-BATCH-001";
 const reviewedAt = new Date("2026-09-02T00:00:00.000Z");
 
 function digest(value: string) {
@@ -31,7 +35,7 @@ function digest(value: string) {
 
 async function createPrismaClient() {
   const directory = await mkdtemp(
-    join(process.env.TMPDIR ?? "/tmp", "sales-approval-lifecycle-"),
+    join(process.env.TMPDIR ?? "/tmp", "sales-approval-batch-v3-"),
   );
   const databasePath = join(directory, "test.db");
   const database = new DatabaseSync(databasePath);
@@ -58,34 +62,33 @@ async function createPrismaClient() {
   };
 }
 
-type FixtureBinding = {
-  target: SalesImportApprovalTarget;
-  targetId: string;
+type FixtureAuthorityBinding = {
   importRunId: string;
-  fingerprint: string;
+  manifestFingerprint: string;
   decisionRef: string;
   authorityEvidence: string;
 };
 
 class FixtureAuthorityVerifier implements SalesImportApprovalAuthorityVerifier {
-  #bindings = new Map<string, FixtureBinding>();
+  binding: FixtureAuthorityBinding | null = null;
+  calls: SalesImportAuthorityVerificationRequest[] = [];
 
-  allow(binding: FixtureBinding) {
-    this.#bindings.set(binding.decisionRef, binding);
+  allow(binding: FixtureAuthorityBinding) {
+    this.binding = binding;
   }
 
   async verify(request: SalesImportAuthorityVerificationRequest) {
-    const binding = this.#bindings.get(request.decisionRef);
-    if (!binding) throw new Error("Fixture authority decision is not bound");
+    const binding = this.binding;
+    if (!binding) throw new Error("Fixture batch authority is not bound");
+    this.calls.push(request);
     assert.equal(request.purpose, "SALES_IMPORT_APPROVAL");
-    assert.equal(request.target, binding.target);
-    assert.equal(request.targetId, binding.targetId);
     assert.equal(request.importRunId, binding.importRunId);
-    assert.equal(request.approvalFingerprint, binding.fingerprint);
+    assert.equal(request.approvalManifestFingerprint, binding.manifestFingerprint);
     assert.equal(
-      request.fingerprintVersion,
-      salesImportApprovalFingerprintContractVersion,
+      request.manifestContractVersion,
+      salesImportApprovalManifestContractVersion,
     );
+    assert.equal(request.decisionRef, binding.decisionRef);
     assert.equal(request.authorityEvidence, binding.authorityEvidence);
     return {
       subjectId: "fixture-ceo-subject",
@@ -94,7 +97,10 @@ class FixtureAuthorityVerifier implements SalesImportApprovalAuthorityVerifier {
       authorityEvidenceDigest: digest(
         JSON.stringify({
           verifier: "isolated-fixture-verifier-v1",
-          ...binding,
+          importRunId: binding.importRunId,
+          manifestFingerprint: binding.manifestFingerprint,
+          decisionRef: binding.decisionRef,
+          authorityEvidence: binding.authorityEvidence,
         }),
       ),
       verifierId: "isolated-fixture-verifier-v1",
@@ -176,77 +182,140 @@ async function createFixture({
   return { run, sources, records };
 }
 
-async function currentFingerprint(importRunId: string) {
-  return (
-    await buildSalesImportApprovalFingerprint({ prisma, importRunId })
-  ).fingerprint;
-}
-
-async function authorizeAndApprove({
-  verifier,
-  target,
-  targetId,
-  importRunId,
-  decisionRef,
-}: {
-  verifier: FixtureAuthorityVerifier;
-  target: SalesImportApprovalTarget;
-  targetId: string;
-  importRunId: string;
-  decisionRef: string;
-}) {
-  const fingerprint = await currentFingerprint(importRunId);
-  const authorityEvidence = `fixture-evidence:${decisionRef}`;
-  verifier.allow({
-    target,
-    targetId,
-    importRunId,
-    fingerprint,
-    decisionRef,
-    authorityEvidence,
-  });
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: verifier,
-  });
-  const request = {
-    expectedFingerprint: fingerprint,
-    expectedFingerprintContractVersion:
-      salesImportApprovalFingerprintContractVersion,
-    authorization: { decisionRef, authorityEvidence },
-    reason: "isolated fixture approval",
-    reviewedAt,
-  };
-  if (target === "RECORD") {
-    return lifecycle.approveRecord({ ...request, recordId: targetId });
-  }
-  if (target === "SOURCE") {
-    return lifecycle.approveSource({ ...request, importSourceId: targetId });
-  }
-  return lifecycle.approveRun({ ...request, importRunId: targetId });
-}
-
-async function approveAllRecords(
-  verifier: FixtureAuthorityVerifier,
-  fixture: Awaited<ReturnType<typeof createFixture>>,
-) {
-  for (const [index, record] of fixture.records.entries()) {
-    await authorizeAndApprove({
-      verifier,
-      target: "RECORD",
-      targetId: record.id,
-      importRunId: fixture.run.id,
-      decisionRef: `DEC-RECORD-${index}`,
-    });
-  }
-}
-
 async function approvalSnapshot() {
   return {
     runs: await prisma.importRun.findMany({ orderBy: { id: "asc" } }),
     sources: await prisma.importSource.findMany({ orderBy: { id: "asc" } }),
     records: await prisma.canonicalSalesRecord.findMany({ orderBy: { id: "asc" } }),
+    sales: await prisma.sale.findMany({ orderBy: { id: "asc" } }),
+    saleItems: await prisma.saleItem.findMany({ orderBy: { id: "asc" } }),
+    promotionRuns: await prisma.promotionRun.findMany({ orderBy: { id: "asc" } }),
   };
+}
+
+function createAuthorizedLifecycle(
+  fixture: Awaited<ReturnType<typeof createFixture>>,
+  manifest: SalesImportApprovalManifest,
+  verifier = new FixtureAuthorityVerifier(),
+) {
+  verifier.allow({
+    importRunId: fixture.run.id,
+    manifestFingerprint: manifest.fingerprint,
+    decisionRef,
+    authorityEvidence,
+  });
+  return {
+    verifier,
+    lifecycle: createSalesImportApprovalLifecycle({
+      prisma,
+      authorityVerifier: verifier,
+    }),
+  };
+}
+
+async function requestFor({
+  fixture,
+  manifest,
+  batchDecisionRef = decisionRef,
+  manifestFingerprint = manifest.fingerprint,
+  manifestContractVersion = salesImportApprovalManifestContractVersion,
+}: {
+  fixture: Awaited<ReturnType<typeof createFixture>>;
+  manifest: SalesImportApprovalManifest;
+  batchDecisionRef?: string;
+  manifestFingerprint?: string;
+  manifestContractVersion?: string;
+}): Promise<SalesImportApprovalRequest> {
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma,
+    importRunId: fixture.run.id,
+    approvalManifestFingerprint: manifest.fingerprint,
+    approvalDecisionRef: decisionRef,
+  });
+  return {
+    approvalManifestFingerprint: manifestFingerprint,
+    approvalManifestContractVersion: manifestContractVersion,
+    expectedTransitionStateFingerprint: state.fingerprint,
+    authorization: {
+      decisionRef: batchDecisionRef,
+      authorityEvidence,
+    },
+    reason: "isolated fixture batch approval",
+    reviewedAt,
+  };
+}
+
+async function executeEntry({
+  fixture,
+  manifest,
+  lifecycle,
+  entry,
+  request,
+}: {
+  fixture: Awaited<ReturnType<typeof createFixture>>;
+  manifest: SalesImportApprovalManifest;
+  lifecycle: ReturnType<typeof createSalesImportApprovalLifecycle>;
+  entry: SalesImportApprovalTransitionPlanEntry;
+  request?: SalesImportApprovalRequest;
+}) {
+  const currentRequest = request ?? (await requestFor({ fixture, manifest }));
+  if (entry.target === "RECORD") {
+    return lifecycle.approveRecord({ ...currentRequest, recordId: entry.targetId });
+  }
+  if (entry.target === "SOURCE") {
+    return lifecycle.approveSource({
+      ...currentRequest,
+      importSourceId: entry.targetId,
+    });
+  }
+  return lifecycle.approveRun({ ...currentRequest, importRunId: entry.targetId });
+}
+
+async function approvePlanThrough({
+  fixture,
+  manifest,
+  lifecycle,
+  count = manifest.transitionPlan.length,
+}: {
+  fixture: Awaited<ReturnType<typeof createFixture>>;
+  manifest: SalesImportApprovalManifest;
+  lifecycle: ReturnType<typeof createSalesImportApprovalLifecycle>;
+  count?: number;
+}) {
+  const evidence = [];
+  for (const entry of manifest.transitionPlan.slice(0, count)) {
+    evidence.push(await executeEntry({ fixture, manifest, lifecycle, entry }));
+  }
+  return evidence;
+}
+
+async function addValidRecord(fixture: Awaited<ReturnType<typeof createFixture>>) {
+  const source = fixture.sources[0];
+  return prisma.canonicalSalesRecord.create({
+    data: {
+      id: "record-added",
+      importRunId: fixture.run.id,
+      importSourceId: source.id,
+      businessKey: digest("business-added"),
+      sourceHash: source.sourceHash,
+      schemaVersion: "canonical-sales-v1",
+      parserVersion: source.parserVersion,
+      saleDate: new Date("2026-08-23T00:00:00.000Z"),
+      productName: "Anonymous Product Added",
+      originalProductName: "Anonymous Product Added",
+      normalizedProductName: "Anonymous Product Added",
+      quantity: 1,
+      grossAmount: 1023,
+      netAmount: 923,
+      currency: "JPY",
+      platform: "note",
+      source: "note-sales-csv:v1",
+      confidence: 0.99,
+      validationJson: '{"ok":true,"issues":[]}',
+      importedAt: fixture.run.importedAt,
+      importedBy: fixture.run.importedBy,
+    },
+  });
 }
 
 test.before(async () => {
@@ -271,46 +340,40 @@ test.beforeEach(async () => {
   await prisma.product.deleteMany();
 });
 
-test("builds an equal deterministic v2 fingerprint with explicitly ordered collections", async () => {
+test("builds a deterministic v3 immutable manifest with exact scope and plan", async () => {
   const fixture = await createFixture();
-  const first = await buildSalesImportApprovalFingerprint({
-    prisma,
-    importRunId: fixture.run.id,
-  });
-  const second = await buildSalesImportApprovalFingerprint({
-    prisma,
-    importRunId: fixture.run.id,
-  });
+  const first = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const second = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
   assert.equal(first.fingerprint, second.fingerprint);
-  assert.equal(
-    first.canonicalInput.fingerprintContractVersion,
-    salesImportApprovalFingerprintContractVersion,
-  );
-  assert.equal(
-    first.canonicalInput.fingerprintAlgorithm,
-    salesImportApprovalFingerprintAlgorithm,
-  );
-  assert.equal(
-    first.canonicalInput.canonicalizationVersion,
-    salesImportApprovalCanonicalizationVersion,
-  );
-  assert.equal(
-    first.canonicalInput.readinessContractVersion,
-    salesImportApprovalReadinessContractVersion,
-  );
-  assert.deepEqual(
-    first.canonicalInput.persistentRunStatusContract,
-    canonicalPersistentImportRunStatusContract,
-  );
-  const sources = first.canonicalInput.orderedSources as Array<{ id: string }>;
-  const records = first.canonicalInput.orderedCanonicalSalesRecords as Array<{
-    businessKey: string;
-  }>;
-  assert.deepEqual(sources.map(({ id }) => id), ["source-1", "source-2"]);
-  assert.deepEqual(
-    records.map(({ businessKey }) => businessKey),
-    [...records.map(({ businessKey }) => businessKey)].sort(),
-  );
+  assert.equal(first.canonicalInput.manifestContractVersion, salesImportApprovalManifestContractVersion);
+  assert.equal(first.canonicalInput.canonicalizationVersion, salesImportApprovalManifestCanonicalizationVersion);
+  assert.deepEqual(first.canonicalInput.batchScope, { exactSourceCount: 2, exactRecordCount: 4 });
+  assert.deepEqual(first.canonicalInput.staticInitialStateContract, {
+    records: { approvalStatus: "PENDING", membership: "EXACT" },
+    sources: { approvalStatus: "PENDING", membership: "EXACT" },
+    importRun: { approvalStatus: "PENDING" },
+    requiredApprovalAuditFieldsInitiallyUnset: [
+      "reviewedAt",
+      "reviewedBy",
+      "reviewReason",
+      "approvalFingerprint",
+      "approvalFingerprintVersion",
+      "approvalDecisionRef",
+      "approvalAuthorityRole",
+      "approvalAuthorityEvidenceDigest",
+      "approvalVerifierId",
+    ],
+  });
+  assert.equal(first.transitionPlan.length, 7);
+  assert.deepEqual(first.transitionPlan.map(({ target }) => target), [
+    "RECORD", "RECORD", "RECORD", "RECORD", "SOURCE", "SOURCE", "RUN",
+  ]);
+  assert.equal(first.transitionPlan[4].requiresApprovedRecordIds?.length, 2);
+  assert.equal(first.transitionPlan[5].requiresApprovedRecordIds?.length, 2);
+  assert.deepEqual(first.transitionPlan[6].requiresApprovedSourceIds, [
+    "source-1",
+    "source-2",
+  ]);
 });
 
 for (const [runStatus, expected] of [
@@ -319,492 +382,452 @@ for (const [runStatus, expected] of [
   ["review_required", false],
   ["COMPLETED", false],
 ] as const) {
-  test(`persistent Run status ${runStatus} produces runCompleted=${expected}`, async () => {
+  test(`v3 manifest readiness maps exact persisted ${runStatus} to ${expected}`, async () => {
     const fixture = await createFixture({ runStatus });
-    const result = await buildSalesImportApprovalFingerprint({
-      prisma,
-      importRunId: fixture.run.id,
-    });
-    const readiness = result.canonicalInput.readiness as {
-      runCompleted: boolean;
-      lifecycleEligible: boolean;
+    const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+    const importRun = manifest.canonicalInput.importRun as {
+      readiness: { runCompleted: boolean; lifecycleEligible: boolean };
     };
-    assert.equal(readiness.runCompleted, expected);
-    assert.equal(readiness.lifecycleEligible, expected);
+    assert.equal(importRun.readiness.runCompleted, expected);
+    assert.equal(importRun.readiness.lifecycleEligible, expected);
   });
 }
 
-test("changes the fingerprint when canonical Record content changes", async () => {
+test("one CEO batch decision authorizes multiple Record transitions", async () => {
   const fixture = await createFixture();
-  const before = await currentFingerprint(fixture.run.id);
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle, verifier } = createAuthorizedLifecycle(fixture, manifest);
+  const records = manifest.transitionPlan.filter(({ target }) => target === "RECORD");
+  const first = await executeEntry({ fixture, manifest, lifecycle, entry: records[0] });
+  const second = await executeEntry({ fixture, manifest, lifecycle, entry: records[1] });
+  assert.equal(first.approvalDecisionRef, decisionRef);
+  assert.equal(second.approvalDecisionRef, decisionRef);
+  assert.equal(verifier.calls.length, 2);
+  assert.deepEqual(new Set(verifier.calls.map(({ decisionRef: value }) => value)), new Set([decisionRef]));
+});
+
+test("manifest stays stable while Transition-State changes after Record approval", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const evidence = await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const afterManifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  assert.equal(afterManifest.fingerprint, manifest.fingerprint);
+  assert.notEqual(evidence.beforeTransitionStateFingerprint, evidence.afterTransitionStateFingerprint);
+  assert.equal(evidence.approvalDecisionRef, decisionRef);
+  assert.equal(evidence.manifestFingerprint, manifest.fingerprint);
+  assert.equal(evidence.target, "RECORD");
+  assert.equal(evidence.targetId, manifest.transitionPlan[0].targetId);
+  assert.equal(evidence.transitionSequence, 1);
+  assert.equal(evidence.result, "APPROVED");
+});
+
+test("next expected Transition-State succeeds and advances exactly one position", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const first = await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
+  });
+  assert.equal(state.fingerprint, first.afterTransitionStateFingerprint);
+  assert.equal(state.nextTransition?.sequence, 2);
+  const second = await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[1] });
+  assert.equal(second.transitionSequence, 2);
+});
+
+test("manifest remains unchanged through every valid Record, Source, and Run transition", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  for (const entry of manifest.transitionPlan) {
+    await executeEntry({ fixture, manifest, lifecycle, entry });
+    assert.equal(
+      (await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id })).fingerprint,
+      manifest.fingerprint,
+    );
+  }
+});
+
+test("unexpected Record status mutation blocks continuation", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
+  });
   await prisma.canonicalSalesRecord.update({
-    where: { id: fixture.records[0].id },
+    where: { id: manifest.transitionPlan[1].targetId },
+    data: { approvalStatus: ImportApprovalStatus.REVIEW_REQUIRED },
+  });
+  const request: SalesImportApprovalRequest = {
+    approvalManifestFingerprint: manifest.fingerprint,
+    approvalManifestContractVersion: salesImportApprovalManifestContractVersion,
+    expectedTransitionStateFingerprint: state.fingerprint,
+    authorization: { decisionRef, authorityEvidence },
+    reason: "must block",
+    reviewedAt,
+  };
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[1], request }),
+    /APPROVAL_TRANSITION_STATE_MISMATCH/,
+  );
+});
+
+test("canonical Record business-content drift blocks continuation", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const request = await requestFor({ fixture, manifest });
+  await prisma.canonicalSalesRecord.update({
+    where: { id: manifest.transitionPlan[0].targetId },
     data: { grossAmount: { increment: 1 } },
   });
-  assert.notEqual(await currentFingerprint(fixture.run.id), before);
-});
-
-test("changes the fingerprint when Source hash provenance changes", async () => {
-  const fixture = await createFixture();
-  const before = await currentFingerprint(fixture.run.id);
-  await prisma.importSource.update({
-    where: { id: fixture.sources[0].id },
-    data: { sourceHash: digest("mutated-source") },
-  });
-  assert.notEqual(await currentFingerprint(fixture.run.id), before);
-});
-
-test("fingerprint mismatch performs zero approval writes", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  const before = await approvalSnapshot();
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: verifier,
-  });
   await assert.rejects(
-    lifecycle.approveRecord({
-      recordId: fixture.records[0].id,
-      expectedFingerprint: "f".repeat(64),
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: {
-        decisionRef: "FORGED",
-        authorityEvidence: "forged",
-        claimedAuthorityRole: "CEO",
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0], request }),
+    /APPROVAL_MANIFEST_MISMATCH/,
+  );
+});
+
+test("SourceHash drift blocks continuation", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const request = await requestFor({ fixture, manifest });
+  await prisma.importSource.update({ where: { id: fixture.sources[0].id }, data: { sourceHash: digest("mutated-source") } });
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0], request }),
+    /APPROVAL_MANIFEST_MISMATCH/,
+  );
+});
+
+test("added Record changes exact membership and blocks", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const request = await requestFor({ fixture, manifest });
+  await addValidRecord(fixture);
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0], request }),
+    /APPROVAL_MANIFEST_MISMATCH/,
+  );
+});
+
+test("removed Record changes exact membership and blocks", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const request = await requestFor({ fixture, manifest });
+  await prisma.canonicalSalesRecord.delete({ where: { id: manifest.transitionPlan[0].targetId } });
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[1], request }),
+    /APPROVAL_MANIFEST_MISMATCH/,
+  );
+});
+
+test("different decisionRef blocks an interrupted batch", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const correctRequest = await requestFor({ fixture, manifest });
+  await assert.rejects(
+    executeEntry({
+      fixture,
+      manifest,
+      lifecycle,
+      entry: manifest.transitionPlan[1],
+      request: {
+        ...correctRequest,
+        authorization: { decisionRef: "DEC-SALES-BATCH-DIFFERENT", authorityEvidence },
       },
-      reason: "must not write",
     }),
-    /fingerprint mismatch/,
+    /BATCH_APPROVAL_DECISION_MISMATCH/,
+  );
+});
+
+test("different Manifest fingerprint blocks with zero approval writes", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const before = await approvalSnapshot();
+  await assert.rejects(
+    executeEntry({
+      fixture,
+      manifest,
+      lifecycle,
+      entry: manifest.transitionPlan[0],
+      request: await requestFor({ fixture, manifest, manifestFingerprint: "f".repeat(64) }),
+    }),
+    /APPROVAL_MANIFEST_MISMATCH/,
   );
   assert.deepEqual(await approvalSnapshot(), before);
 });
 
-test("rejects a v1 fingerprint contract as v2 approval authorization input", async () => {
+test("authorized audit timestamp changes alter neither Manifest nor Transition-State", async () => {
   const fixture = await createFixture();
-  const before = await approvalSnapshot();
-  const fingerprint = await currentFingerprint(fixture.run.id);
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: unavailableRuntimeCeoAuthorityVerifier,
-  });
-  assert.throws(
-    () => lifecycle.approveRecord({
-      recordId: fixture.records[0].id,
-      expectedFingerprint: fingerprint,
-      expectedFingerprintContractVersion:
-        historicalSalesImportApprovalFingerprintContractVersionV1,
-      authorization: {
-        decisionRef: "HISTORICAL-V1-DECISION",
-        authorityEvidence: "historical-v1-evidence",
-      },
-      reason: "v1 must not authorize a new transition",
-    }),
-    /requires sales-import-approval-sha256-canonical-json-v2/,
-  );
-  assert.deepEqual(await approvalSnapshot(), before);
-});
-
-test("caller-forged CEO role is rejected when runtime binding is unavailable", async () => {
-  const fixture = await createFixture();
-  const before = await approvalSnapshot();
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: unavailableRuntimeCeoAuthorityVerifier,
-  });
-  await assert.rejects(
-    lifecycle.approveRecord({
-      recordId: fixture.records[0].id,
-      expectedFingerprint: await currentFingerprint(fixture.run.id),
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: {
-        decisionRef: "caller-selected-decision",
-        authorityEvidence: "caller-selected-evidence",
-        claimedAuthorityRole: "CEO",
-      },
-      reason: "caller claim is not authorization",
-    }),
-    /RUNTIME CEO AUTHORITY BINDING: UNRESOLVED/,
-  );
-  assert.deepEqual(await approvalSnapshot(), before);
-});
-
-test("caller-forged decision reference is rejected by the verifier", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  const fingerprint = await currentFingerprint(fixture.run.id);
-  verifier.allow({
-    target: "RECORD",
-    targetId: fixture.records[0].id,
-    importRunId: fixture.run.id,
-    fingerprint,
-    decisionRef: "BOUND-DECISION",
-    authorityEvidence: "bound-evidence",
-  });
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: verifier,
-  });
-  await assert.rejects(
-    lifecycle.approveRecord({
-      recordId: fixture.records[0].id,
-      expectedFingerprint: fingerprint,
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: {
-        decisionRef: "FORGED-DECISION",
-        authorityEvidence: "bound-evidence",
-      },
-      reason: "must be verified",
-    }),
-    /decision is not bound/,
-  );
-  assert.equal(
-    (await prisma.canonicalSalesRecord.findUniqueOrThrow({
-      where: { id: fixture.records[0].id },
-    })).approvalStatus,
-    ImportApprovalStatus.PENDING,
-  );
-});
-
-test("rejects an unversioned verifier identifier with zero approval writes", async () => {
-  const fixture = await createFixture();
-  const fingerprint = await currentFingerprint(fixture.run.id);
-  const before = await approvalSnapshot();
-  const unversionedVerifier: SalesImportApprovalAuthorityVerifier = {
-    async verify(request) {
-      return {
-        subjectId: "fixture-ceo-subject",
-        authorityRole: "CEO",
-        decisionRef: request.decisionRef,
-        authorityEvidenceDigest: digest("unversioned-verifier-evidence"),
-        verifierId: "isolated-fixture-verifier",
-      };
-    },
-  };
-  const lifecycle = createSalesImportApprovalLifecycle({
-    prisma,
-    authorityVerifier: unversionedVerifier,
-  });
-  await assert.rejects(
-    lifecycle.approveRecord({
-      recordId: fixture.records[0].id,
-      expectedFingerprint: fingerprint,
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: {
-        decisionRef: "DEC-UNVERSIONED-VERIFIER",
-        authorityEvidence: "fixture-evidence",
-      },
-      reason: "must reject unversioned verifier identity",
-    }),
-    /versioned immutable identifier/,
-  );
-  assert.deepEqual(await approvalSnapshot(), before);
-});
-
-test("Record approval rejects failed canonical validation", async () => {
-  const fixture = await createFixture({ invalidRecord: true });
-  const verifier = new FixtureAuthorityVerifier();
-  const invalid = fixture.records.find(({ id }) => id === "record-11")!;
-  const fingerprint = await currentFingerprint(fixture.run.id);
-  verifier.allow({
-    target: "RECORD",
-    targetId: invalid.id,
-    importRunId: fixture.run.id,
-    fingerprint,
-    decisionRef: "DEC-INVALID",
-    authorityEvidence: "fixture-evidence:DEC-INVALID",
-  });
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  await assert.rejects(
-    lifecycle.approveRecord({
-      recordId: invalid.id,
-      expectedFingerprint: fingerprint,
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: {
-        decisionRef: "DEC-INVALID",
-        authorityEvidence: "fixture-evidence:DEC-INVALID",
-      },
-      reason: "must fail validation",
-    }),
-    /cannot be APPROVED/,
-  );
-  assert.equal(
-    (await prisma.canonicalSalesRecord.findUniqueOrThrow({ where: { id: invalid.id } }))
-      .approvalStatus,
-    ImportApprovalStatus.PENDING,
-  );
-});
-
-test("allows partial Record approval while Source and Run remain PENDING", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  await authorizeAndApprove({
-    verifier,
-    target: "RECORD",
-    targetId: fixture.records[0].id,
-    importRunId: fixture.run.id,
-    decisionRef: "DEC-PARTIAL",
-  });
-  assert.equal(
-    await prisma.canonicalSalesRecord.count({
-      where: { approvalStatus: ImportApprovalStatus.APPROVED },
-    }),
-    1,
-  );
-  assert.equal(
-    await prisma.importSource.count({
-      where: { approvalStatus: ImportApprovalStatus.APPROVED },
-    }),
-    0,
-  );
-  assert.equal(
-    (await prisma.importRun.findUniqueOrThrow({ where: { id: fixture.run.id } }))
-      .approvalStatus,
-    ImportApprovalStatus.PENDING,
-  );
-});
-
-test("blocks Source approval until all required child Records are APPROVED", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  const source = fixture.sources[0];
-  const fingerprint = await currentFingerprint(fixture.run.id);
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  await assert.rejects(
-    lifecycle.approveSource({
-      importSourceId: source.id,
-      expectedFingerprint: fingerprint,
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: { decisionRef: "DEC-SOURCE-EARLY", authorityEvidence: "evidence" },
-      reason: "too early",
-    }),
-    /every child Canonical Sales Record/,
-  );
-  const unchanged = await prisma.importSource.findUniqueOrThrow({ where: { id: source.id } });
-  assert.equal(unchanged.approvalStatus, ImportApprovalStatus.PENDING);
-  assert.equal(unchanged.reviewedAt, null);
-});
-
-test("blocks Run approval until every required Source is APPROVED", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  await approveAllRecords(verifier, fixture);
-  await authorizeAndApprove({
-    verifier,
-    target: "SOURCE",
-    targetId: fixture.sources[0].id,
-    importRunId: fixture.run.id,
-    decisionRef: "DEC-ONE-SOURCE",
-  });
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  await assert.rejects(
-    lifecycle.approveRun({
-      importRunId: fixture.run.id,
-      expectedFingerprint: await currentFingerprint(fixture.run.id),
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: { decisionRef: "DEC-RUN-EARLY", authorityEvidence: "evidence" },
-      reason: "too early",
-    }),
-    /every ImportSource/,
-  );
-  assert.equal(
-    (await prisma.importRun.findUniqueOrThrow({ where: { id: fixture.run.id } }))
-      .approvalStatus,
-    ImportApprovalStatus.PENDING,
-  );
-});
-
-test("Source transition is atomic when a child gate fails", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  await approveAllRecords(verifier, fixture);
-  const source = fixture.sources[0];
-  const child = await prisma.canonicalSalesRecord.findFirstOrThrow({
-    where: { importSourceId: source.id },
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const beforeState = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
   });
   await prisma.canonicalSalesRecord.update({
-    where: { id: child.id },
-    data: { approvalStatus: ImportApprovalStatus.REVIEW_REQUIRED },
+    where: { id: manifest.transitionPlan[0].targetId },
+    data: { reviewedAt: new Date("2026-09-02T02:00:00.000Z") },
   });
-  const before = await approvalSnapshot();
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  await assert.rejects(
-    lifecycle.approveSource({
-      importSourceId: source.id,
-      expectedFingerprint: await currentFingerprint(fixture.run.id),
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: { decisionRef: "DEC-SOURCE-ATOMIC", authorityEvidence: "evidence" },
-      reason: "must roll back",
-    }),
-    /every child Canonical Sales Record/,
-  );
-  assert.deepEqual(await approvalSnapshot(), before);
+  const afterManifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const afterState = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
+  });
+  assert.equal(afterManifest.fingerprint, manifest.fingerprint);
+  assert.equal(afterState.fingerprint, beforeState.fingerprint);
 });
 
-test("Run transition is atomic when a Source gate fails", async () => {
+test("Source cannot approve before all Records and Run cannot approve before Sources", async () => {
   const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  await approveAllRecords(verifier, fixture);
-  for (const [index, source] of fixture.sources.entries()) {
-    await authorizeAndApprove({
-      verifier,
-      target: "SOURCE",
-      targetId: source.id,
-      importRunId: fixture.run.id,
-      decisionRef: `DEC-SOURCE-${index}`,
-    });
-  }
-  await prisma.importSource.update({
-    where: { id: fixture.sources[0].id },
-    data: { approvalStatus: ImportApprovalStatus.REVIEW_REQUIRED },
-  });
-  const before = await approvalSnapshot();
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  await assert.rejects(
-    lifecycle.approveRun({
-      importRunId: fixture.run.id,
-      expectedFingerprint: await currentFingerprint(fixture.run.id),
-      expectedFingerprintContractVersion:
-        salesImportApprovalFingerprintContractVersion,
-      authorization: { decisionRef: "DEC-RUN-ATOMIC", authorityEvidence: "evidence" },
-      reason: "must roll back",
-    }),
-    /every ImportSource/,
-  );
-  assert.deepEqual(await approvalSnapshot(), before);
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const source = manifest.transitionPlan.find(({ target }) => target === "SOURCE")!;
+  const run = manifest.transitionPlan.find(({ target }) => target === "RUN")!;
+  const request = await requestFor({ fixture, manifest });
+  await assert.rejects(executeEntry({ fixture, manifest, lifecycle, entry: source, request }), /UNEXPECTED_APPROVAL_TRANSITION_TARGET/);
+  await assert.rejects(executeEntry({ fixture, manifest, lifecycle, entry: run, request }), /UNEXPECTED_APPROVAL_TRANSITION_TARGET/);
 });
 
-test("repeated invocation is idempotent and does not overwrite audit evidence", async () => {
+test("all approved entities persist the same Decision Ref and Manifest fingerprint", async () => {
   const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  const record = await authorizeAndApprove({
-    verifier,
-    target: "RECORD",
-    targetId: fixture.records[0].id,
-    importRunId: fixture.run.id,
-    decisionRef: "DEC-IDEMPOTENT",
-  });
-  const current = await currentFingerprint(fixture.run.id);
-  verifier.allow({
-    target: "RECORD",
-    targetId: record.id,
-    importRunId: fixture.run.id,
-    fingerprint: current,
-    decisionRef: "DEC-IDEMPOTENT-RETRY",
-    authorityEvidence: "fixture-evidence:DEC-IDEMPOTENT-RETRY",
-  });
-  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
-  const repeated = await lifecycle.approveRecord({
-    recordId: record.id,
-    expectedFingerprint: current,
-    expectedFingerprintContractVersion:
-      salesImportApprovalFingerprintContractVersion,
-    authorization: {
-      decisionRef: "DEC-IDEMPOTENT-RETRY",
-      authorityEvidence: "fixture-evidence:DEC-IDEMPOTENT-RETRY",
-    },
-    reason: "retry",
-    reviewedAt: new Date("2026-09-02T01:00:00.000Z"),
-  });
-  assert.equal(repeated.approvalDecisionRef, "DEC-IDEMPOTENT");
-  assert.equal(repeated.approvalVerifierId, "isolated-fixture-verifier-v1");
-  assert.equal(
-    repeated.approvalFingerprintVersion,
-    salesImportApprovalFingerprintContractVersion,
-  );
-  assert.equal(repeated.reviewedAt?.toISOString(), reviewedAt.toISOString());
-});
-
-test("persists complete bounded audit evidence for Record, Source, and Run", async () => {
-  const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  await approveAllRecords(verifier, fixture);
-  for (const [index, source] of fixture.sources.entries()) {
-    await authorizeAndApprove({
-      verifier,
-      target: "SOURCE",
-      targetId: source.id,
-      importRunId: fixture.run.id,
-      decisionRef: `DEC-AUDIT-SOURCE-${index}`,
-    });
-  }
-  await authorizeAndApprove({
-    verifier,
-    target: "RUN",
-    targetId: fixture.run.id,
-    importRunId: fixture.run.id,
-    decisionRef: "DEC-AUDIT-RUN",
-  });
-
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await approvePlanThrough({ fixture, manifest, lifecycle });
   const values = [
     ...(await prisma.canonicalSalesRecord.findMany()),
     ...(await prisma.importSource.findMany()),
     ...(await prisma.importRun.findMany()),
   ];
-  assert.equal(values.length, 7);
+  assert.deepEqual(new Set(values.map(({ approvalDecisionRef }) => approvalDecisionRef)), new Set([decisionRef]));
+  assert.deepEqual(new Set(values.map(({ approvalFingerprint }) => approvalFingerprint)), new Set([manifest.fingerprint]));
+  assert.deepEqual(
+    new Set(values.map(({ approvalFingerprintVersion }) => approvalFingerprintVersion)),
+    new Set([salesImportApprovalManifestContractVersion]),
+  );
+});
+
+test("the exact prior real v2 fingerprint and contract are rejected as v3 authorization", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
+  });
+  assert.throws(
+    () => lifecycle.approveRecord({
+      recordId: manifest.transitionPlan[0].targetId,
+      approvalManifestFingerprint: "1ac00d3f8c72f1753c11e8abddcbd2054334a807828f99f514ea6338cc8cc1ae",
+      approvalManifestContractVersion:
+        historicalSalesImportApprovalFingerprintContractVersionV2,
+      expectedTransitionStateFingerprint: state.fingerprint,
+      authorization: { decisionRef, authorityEvidence },
+      reason: "v2 is historical only",
+    }),
+    /requires sales-import-approval-manifest-sha256-canonical-json-v3/,
+  );
+});
+
+test("unversioned verifier is rejected with zero writes", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const before = await approvalSnapshot();
+  const verifier: SalesImportApprovalAuthorityVerifier = {
+    async verify(request) {
+      return {
+        subjectId: "fixture-ceo-subject",
+        authorityRole: "CEO",
+        decisionRef: request.decisionRef,
+        authorityEvidenceDigest: digest("fixture-authority"),
+        verifierId: "isolated-fixture-verifier",
+      };
+    },
+  };
+  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: verifier });
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] }),
+    /versioned immutable identifier/,
+  );
+  assert.deepEqual(await approvalSnapshot(), before);
+});
+
+test("interrupted batch continues under the same Decision Ref and Manifest", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const firstRuntime = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle: firstRuntime.lifecycle, entry: manifest.transitionPlan[0] });
+  const resumedRuntime = createAuthorizedLifecycle(fixture, manifest);
+  const resumed = await executeEntry({ fixture, manifest, lifecycle: resumedRuntime.lifecycle, entry: manifest.transitionPlan[1] });
+  assert.equal(resumed.approvalDecisionRef, decisionRef);
+  assert.equal(resumed.manifestFingerprint, manifest.fingerprint);
+  assert.equal(resumedRuntime.verifier.calls.length, 1);
+});
+
+test("interrupted batch rejects a different verifier identity binding", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const firstRuntime = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle: firstRuntime.lifecycle, entry: manifest.transitionPlan[0] });
+  const approved = await prisma.canonicalSalesRecord.findUniqueOrThrow({
+    where: { id: manifest.transitionPlan[0].targetId },
+  });
+  const changedVerifier: SalesImportApprovalAuthorityVerifier = {
+    async verify(request) {
+      return {
+        subjectId: approved.reviewedBy!,
+        authorityRole: "CEO",
+        decisionRef: request.decisionRef,
+        authorityEvidenceDigest: approved.approvalAuthorityEvidenceDigest!,
+        verifierId: "different-fixture-verifier-v2",
+      };
+    },
+  };
+  const lifecycle = createSalesImportApprovalLifecycle({
+    prisma,
+    authorityVerifier: changedVerifier,
+  });
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[1] }),
+    /BATCH_APPROVAL_AUTHORITY_BINDING_MISMATCH/,
+  );
+});
+
+test("business drift after interruption blocks continuation", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] });
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
+  });
+  await prisma.canonicalSalesRecord.update({
+    where: { id: manifest.transitionPlan[1].targetId },
+    data: { quantity: { increment: 1 } },
+  });
+  const request: SalesImportApprovalRequest = {
+    approvalManifestFingerprint: manifest.fingerprint,
+    approvalManifestContractVersion: salesImportApprovalManifestContractVersion,
+    expectedTransitionStateFingerprint: state.fingerprint,
+    authorization: { decisionRef, authorityEvidence },
+    reason: "must block",
+    reviewedAt,
+  };
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[1], request }),
+    /APPROVAL_MANIFEST_MISMATCH/,
+  );
+});
+
+test("initial approval-state mismatch fails before the first write", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await prisma.canonicalSalesRecord.update({ where: { id: manifest.transitionPlan[0].targetId }, data: { reviewedAt } });
+  await assert.rejects(
+    lifecycle.approveRecord({
+      recordId: manifest.transitionPlan[0].targetId,
+      approvalManifestFingerprint: manifest.fingerprint,
+      approvalManifestContractVersion: salesImportApprovalManifestContractVersion,
+      expectedTransitionStateFingerprint: "a".repeat(64),
+      authorization: { decisionRef, authorityEvidence },
+      reason: "must fail initial state",
+    }),
+    /INITIAL_APPROVAL_STATE_MISMATCH/,
+  );
+  assert.equal(await prisma.canonicalSalesRecord.count({ where: { approvalStatus: ImportApprovalStatus.APPROVED } }), 0);
+});
+
+test("transition fingerprint mismatch performs zero writes", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const before = await approvalSnapshot();
+  await assert.rejects(
+    lifecycle.approveRecord({
+      ...(await requestFor({ fixture, manifest })),
+      recordId: manifest.transitionPlan[0].targetId,
+      expectedTransitionStateFingerprint: "f".repeat(64),
+    }),
+    /APPROVAL_TRANSITION_STATE_FINGERPRINT_MISMATCH/,
+  );
+  assert.deepEqual(await approvalSnapshot(), before);
+});
+
+test("idempotent retry returns evidence without changing Transition-State", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  const firstEntry = manifest.transitionPlan[0];
+  await executeEntry({ fixture, manifest, lifecycle, entry: firstEntry });
+  const retry = await executeEntry({ fixture, manifest, lifecycle, entry: firstEntry });
+  assert.equal(retry.result, "ALREADY_APPROVED");
+  assert.equal(retry.beforeTransitionStateFingerprint, retry.afterTransitionStateFingerprint);
+});
+
+test("runtime CEO binding remains unavailable and caller claims cannot authorize", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const lifecycle = createSalesImportApprovalLifecycle({ prisma, authorityVerifier: unavailableRuntimeCeoAuthorityVerifier });
+  await assert.rejects(
+    lifecycle.approveRecord({
+      ...(await requestFor({ fixture, manifest })),
+      recordId: manifest.transitionPlan[0].targetId,
+      authorization: { decisionRef, authorityEvidence, claimedAuthorityRole: "CEO" },
+    }),
+    /RUNTIME CEO AUTHORITY BINDING: UNRESOLVED/,
+  );
+});
+
+test("invalid Record validation blocks the batch before approval writes", async () => {
+  const fixture = await createFixture({ invalidRecord: true });
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await assert.rejects(
+    executeEntry({ fixture, manifest, lifecycle, entry: manifest.transitionPlan[0] }),
+    /SALES_IMPORT_APPROVAL_MANIFEST_NOT_READY/,
+  );
+  assert.equal(await prisma.canonicalSalesRecord.count({ where: { approvalStatus: ImportApprovalStatus.APPROVED } }), 0);
+});
+
+test("batch audit is complete and Data Layer Promotion records remain untouched", async () => {
+  const fixture = await createFixture();
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const { lifecycle } = createAuthorizedLifecycle(fixture, manifest);
+  await approvePlanThrough({ fixture, manifest, lifecycle });
+  const values = [
+    ...(await prisma.canonicalSalesRecord.findMany()),
+    ...(await prisma.importSource.findMany()),
+    ...(await prisma.importRun.findMany()),
+  ];
   for (const value of values) {
     assert.equal(value.approvalStatus, ImportApprovalStatus.APPROVED);
     assert.equal(value.reviewedBy, "fixture-ceo-subject");
-    assert.equal(value.reviewedAt?.toISOString(), reviewedAt.toISOString());
-    assert.equal(value.reviewReason, "isolated fixture approval");
-    assert.match(value.approvalFingerprint ?? "", /^[a-f0-9]{64}$/);
-    assert.equal(
-      value.approvalFingerprintVersion,
-      salesImportApprovalFingerprintContractVersion,
-    );
-    assert.match(value.approvalDecisionRef ?? "", /^DEC-/);
+    assert.equal(value.approvalDecisionRef, decisionRef);
+    assert.equal(value.approvalFingerprint, manifest.fingerprint);
+    assert.equal(value.approvalFingerprintVersion, salesImportApprovalManifestContractVersion);
     assert.equal(value.approvalAuthorityRole, "CEO");
     assert.match(value.approvalAuthorityEvidenceDigest ?? "", /^[a-f0-9]{64}$/);
     assert.equal(value.approvalVerifierId, "isolated-fixture-verifier-v1");
   }
+  assert.equal(await prisma.sale.count(), 0);
+  assert.equal(await prisma.saleItem.count(), 0);
+  assert.equal(await prisma.promotionRun.count(), 0);
 });
 
-test("approval lifecycle does not mutate Sale, SaleItem, PromotionRun, or unrelated ODL", async () => {
+test("v3 Transition-State contract identifiers are exact", async () => {
   const fixture = await createFixture();
-  const verifier = new FixtureAuthorityVerifier();
-  const article = await prisma.article.create({
-    data: { title: "Unrelated", price: 100, pv: 1, purchases: 0 },
+  const manifest = await buildSalesImportApprovalManifest({ prisma, importRunId: fixture.run.id });
+  const state = await buildSalesImportApprovalTransitionState({
+    prisma, importRunId: fixture.run.id, approvalManifestFingerprint: manifest.fingerprint, approvalDecisionRef: decisionRef,
   });
-  const product = await prisma.product.create({ data: { name: "Unrelated" } });
-  const unrelatedBefore = {
-    article: await prisma.article.findUniqueOrThrow({ where: { id: article.id } }),
-    product: await prisma.product.findUniqueOrThrow({ where: { id: product.id } }),
-    saleCount: await prisma.sale.count(),
-    saleItemCount: await prisma.saleItem.count(),
-    promotionRunCount: await prisma.promotionRun.count(),
-  };
-  await approveAllRecords(verifier, fixture);
-  for (const [index, source] of fixture.sources.entries()) {
-    await authorizeAndApprove({
-      verifier,
-      target: "SOURCE",
-      targetId: source.id,
-      importRunId: fixture.run.id,
-      decisionRef: `DEC-NO-MUTATION-SOURCE-${index}`,
-    });
-  }
-  await authorizeAndApprove({
-    verifier,
-    target: "RUN",
-    targetId: fixture.run.id,
-    importRunId: fixture.run.id,
-    decisionRef: "DEC-NO-MUTATION-RUN",
-  });
-  assert.deepEqual(
-    {
-      article: await prisma.article.findUniqueOrThrow({ where: { id: article.id } }),
-      product: await prisma.product.findUniqueOrThrow({ where: { id: product.id } }),
-      saleCount: await prisma.sale.count(),
-      saleItemCount: await prisma.saleItem.count(),
-      promotionRunCount: await prisma.promotionRun.count(),
-    },
-    unrelatedBefore,
-  );
+  assert.equal(state.canonicalInput.transitionStateContractVersion, salesImportApprovalTransitionStateContractVersion);
+  assert.equal(state.canonicalInput.canonicalizationVersion, salesImportApprovalTransitionStateCanonicalizationVersion);
+  assert.equal(state.nextTransition?.sequence, 1);
 });
