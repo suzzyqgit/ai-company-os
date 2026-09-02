@@ -8,10 +8,11 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 
-export const salesImportApprovalFingerprintVersion =
-  "sales-import-approval-fingerprint-v1";
 export const salesImportApprovalCanonicalizationVersion =
   "sales-import-approval-canonical-json-v1";
+export const salesImportApprovalFingerprintAlgorithm = "SHA-256";
+export const salesImportApprovalFingerprintContractVersion =
+  "sales-import-approval-sha256-canonical-json-v1";
 
 export type SalesImportApprovalTarget = "RECORD" | "SOURCE" | "RUN";
 
@@ -83,6 +84,13 @@ function assertNonEmpty(value: string, field: string) {
 function assertSha256(value: string, field: string) {
   if (!/^[a-f0-9]{64}$/.test(value)) {
     throw new Error(`${field} must be a lowercase SHA-256 digest`);
+  }
+}
+
+function assertVersionedVerifierId(value: string) {
+  assertNonEmpty(value, "verifierId");
+  if (!/^[a-z0-9][a-z0-9._-]*-v[1-9][0-9]*$/.test(value)) {
+    throw new Error("verifierId must be a versioned immutable identifier");
   }
 }
 
@@ -284,7 +292,8 @@ export async function buildSalesImportApprovalFingerprint({
 
   const summary = graph.summaryJson ? jsonEvidence(graph.summaryJson) : null;
   const canonicalInput: Record<string, unknown> = {
-    fingerprintVersion: salesImportApprovalFingerprintVersion,
+    fingerprintContractVersion: salesImportApprovalFingerprintContractVersion,
+    fingerprintAlgorithm: salesImportApprovalFingerprintAlgorithm,
     canonicalizationVersion: salesImportApprovalCanonicalizationVersion,
     importRun: {
       id: graph.id,
@@ -357,7 +366,7 @@ async function verifyAuthority({
     targetId,
     importRunId,
     approvalFingerprint: fingerprint,
-    fingerprintVersion: salesImportApprovalFingerprintVersion,
+    fingerprintVersion: salesImportApprovalFingerprintContractVersion,
     decisionRef: authorization.decisionRef,
     authorityEvidence: authorization.authorityEvidence,
   });
@@ -365,7 +374,7 @@ async function verifyAuthority({
     throw new Error("Sales Import approval requires verified CEO authority");
   }
   assertNonEmpty(verified.subjectId, "verified subjectId");
-  assertNonEmpty(verified.verifierId, "verifierId");
+  assertVersionedVerifierId(verified.verifierId);
   assertSha256(verified.authorityEvidenceDigest, "authorityEvidenceDigest");
   if (verified.decisionRef !== authorization.decisionRef) {
     throw new Error("Verified decision reference does not match the request");
@@ -398,7 +407,7 @@ function approvalAuditData({
     reviewedBy: verified.subjectId,
     reviewReason: reason.trim(),
     approvalFingerprint: fingerprint,
-    approvalFingerprintVersion: salesImportApprovalFingerprintVersion,
+    approvalFingerprintVersion: salesImportApprovalFingerprintContractVersion,
     approvalDecisionRef: verified.decisionRef,
     approvalAuthorityRole: verified.authorityRole,
     approvalAuthorityEvidenceDigest: verified.authorityEvidenceDigest,

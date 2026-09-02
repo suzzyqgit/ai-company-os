@@ -37,6 +37,10 @@ Each transition requires a freshly recomputed deterministic fingerprint of the e
 
 A mismatch fails before any approval write. Each approved object preserves the pre-transition fingerprint, decision reference, verified authority role, authority evidence digest, verifier identity, reviewer identity, review time, and reason.
 
+The approved schema contract uses the existing six nullable approval audit fields only. `approvalFingerprintVersion` stores an immutable Approval Fingerprint Contract Version, not a free-standing implementation revision. Contract `sales-import-approval-sha256-canonical-json-v1` uniquely binds SHA-256 to `sales-import-approval-canonical-json-v1`; algorithm and canonicalization version are also explicit in the canonical fingerprint input.
+
+`approvalVerifierId` is an immutable, versioned verifier implementation identifier using the `name-vN` form. It is accepted only from the authority verifier, persisted on the first successful transition, and not rewritten by idempotent re-entry.
+
 ## Authority Boundary
 
 CEO is the approval authority. Caller-provided role names, reviewer names, booleans, and arbitrary decision references are not authorization.
@@ -47,11 +51,12 @@ The bounded lifecycle accepts an authority verifier supplied by trusted runtime 
 
 ## Validation Evidence
 
-- Isolated bounded lifecycle tests: 15 cases PASS
+- Isolated bounded lifecycle tests: 16 cases PASS
 - Existing Sales Import Ledger regression: 6 cases PASS
 - Fingerprint mismatch: zero approval writes
 - Caller-forged CEO role: rejected
 - Caller-forged decision reference: rejected
+- Unversioned verifier identity: rejected with zero approval writes
 - Record validation failure: rejected
 - Partial Record approval: allowed
 - Source and Run child gates: fail closed

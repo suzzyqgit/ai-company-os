@@ -8,7 +8,9 @@ import { ImportApprovalStatus, PrismaClient } from "@prisma/client";
 import {
   buildSalesImportApprovalFingerprint,
   createSalesImportApprovalLifecycle,
-  salesImportApprovalFingerprintVersion,
+  salesImportApprovalCanonicalizationVersion,
+  salesImportApprovalFingerprintAlgorithm,
+  salesImportApprovalFingerprintContractVersion,
   unavailableRuntimeCeoAuthorityVerifier,
   type SalesImportApprovalAuthorityVerifier,
   type SalesImportApprovalTarget,
@@ -77,7 +79,10 @@ class FixtureAuthorityVerifier implements SalesImportApprovalAuthorityVerifier {
     assert.equal(request.targetId, binding.targetId);
     assert.equal(request.importRunId, binding.importRunId);
     assert.equal(request.approvalFingerprint, binding.fingerprint);
-    assert.equal(request.fingerprintVersion, salesImportApprovalFingerprintVersion);
+    assert.equal(
+      request.fingerprintVersion,
+      salesImportApprovalFingerprintContractVersion,
+    );
     assert.equal(request.authorityEvidence, binding.authorityEvidence);
     return {
       subjectId: "fixture-ceo-subject",
@@ -269,6 +274,18 @@ test("builds an equal deterministic fingerprint with explicitly ordered collecti
     importRunId: fixture.run.id,
   });
   assert.equal(first.fingerprint, second.fingerprint);
+  assert.equal(
+    first.canonicalInput.fingerprintContractVersion,
+    salesImportApprovalFingerprintContractVersion,
+  );
+  assert.equal(
+    first.canonicalInput.fingerprintAlgorithm,
+    salesImportApprovalFingerprintAlgorithm,
+  );
+  assert.equal(
+    first.canonicalInput.canonicalizationVersion,
+    salesImportApprovalCanonicalizationVersion,
+  );
   const sources = first.canonicalInput.orderedSources as Array<{ id: string }>;
   const records = first.canonicalInput.orderedCanonicalSalesRecords as Array<{
     businessKey: string;
@@ -381,6 +398,40 @@ test("caller-forged decision reference is rejected by the verifier", async () =>
     })).approvalStatus,
     ImportApprovalStatus.PENDING,
   );
+});
+
+test("rejects an unversioned verifier identifier with zero approval writes", async () => {
+  const fixture = await createFixture();
+  const fingerprint = await currentFingerprint(fixture.run.id);
+  const before = await approvalSnapshot();
+  const unversionedVerifier: SalesImportApprovalAuthorityVerifier = {
+    async verify(request) {
+      return {
+        subjectId: "fixture-ceo-subject",
+        authorityRole: "CEO",
+        decisionRef: request.decisionRef,
+        authorityEvidenceDigest: digest("unversioned-verifier-evidence"),
+        verifierId: "isolated-fixture-verifier",
+      };
+    },
+  };
+  const lifecycle = createSalesImportApprovalLifecycle({
+    prisma,
+    authorityVerifier: unversionedVerifier,
+  });
+  await assert.rejects(
+    lifecycle.approveRecord({
+      recordId: fixture.records[0].id,
+      expectedFingerprint: fingerprint,
+      authorization: {
+        decisionRef: "DEC-UNVERSIONED-VERIFIER",
+        authorityEvidence: "fixture-evidence",
+      },
+      reason: "must reject unversioned verifier identity",
+    }),
+    /versioned immutable identifier/,
+  );
+  assert.deepEqual(await approvalSnapshot(), before);
 });
 
 test("Record approval rejects failed canonical validation", async () => {
@@ -581,6 +632,11 @@ test("repeated invocation is idempotent and does not overwrite audit evidence", 
     reviewedAt: new Date("2026-09-02T01:00:00.000Z"),
   });
   assert.equal(repeated.approvalDecisionRef, "DEC-IDEMPOTENT");
+  assert.equal(repeated.approvalVerifierId, "isolated-fixture-verifier-v1");
+  assert.equal(
+    repeated.approvalFingerprintVersion,
+    salesImportApprovalFingerprintContractVersion,
+  );
   assert.equal(repeated.reviewedAt?.toISOString(), reviewedAt.toISOString());
 });
 
@@ -619,7 +675,7 @@ test("persists complete bounded audit evidence for Record, Source, and Run", asy
     assert.match(value.approvalFingerprint ?? "", /^[a-f0-9]{64}$/);
     assert.equal(
       value.approvalFingerprintVersion,
-      salesImportApprovalFingerprintVersion,
+      salesImportApprovalFingerprintContractVersion,
     );
     assert.match(value.approvalDecisionRef ?? "", /^DEC-/);
     assert.equal(value.approvalAuthorityRole, "CEO");
