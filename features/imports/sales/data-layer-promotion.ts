@@ -56,7 +56,7 @@ export async function buildDataLayerPromotionPlan({
 
   if (!importRun) throw new Error("ImportRun not found");
   if (
-    importRun.status !== "COMPLETED" ||
+    importRun.status !== "completed" ||
     importRun.approvalStatus !== ImportApprovalStatus.APPROVED
   ) {
     throw new Error("ImportRun must be completed and approved");

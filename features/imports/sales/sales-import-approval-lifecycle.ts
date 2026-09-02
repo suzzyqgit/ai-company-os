@@ -9,10 +9,22 @@ import {
 } from "@prisma/client";
 
 export const salesImportApprovalCanonicalizationVersion =
-  "sales-import-approval-canonical-json-v1";
+  "sales-import-approval-canonical-json-v2";
 export const salesImportApprovalFingerprintAlgorithm = "SHA-256";
 export const salesImportApprovalFingerprintContractVersion =
+  "sales-import-approval-sha256-canonical-json-v2";
+export const historicalSalesImportApprovalFingerprintContractVersionV1 =
   "sales-import-approval-sha256-canonical-json-v1";
+export const salesImportApprovalReadinessContractVersion =
+  "sales-import-approval-readiness-v2";
+
+export const canonicalPersistentImportRunStatusContract = Object.freeze({
+  completed: "completed",
+  failed: "failed",
+  reviewRequired: "review_required",
+  exactMatch: true,
+  normalization: "none",
+});
 
 export type SalesImportApprovalTarget = "RECORD" | "SOURCE" | "RUN";
 
@@ -68,6 +80,7 @@ export type SalesImportApprovalFingerprint = {
 
 export type SalesImportApprovalRequest = {
   expectedFingerprint: string;
+  expectedFingerprintContractVersion: string;
   authorization: SalesImportApprovalAuthorization;
   reason: string;
   reviewedAt?: Date;
@@ -91,6 +104,14 @@ function assertVersionedVerifierId(value: string) {
   assertNonEmpty(value, "verifierId");
   if (!/^[a-z0-9][a-z0-9._-]*-v[1-9][0-9]*$/.test(value)) {
     throw new Error("verifierId must be a versioned immutable identifier");
+  }
+}
+
+function assertCurrentFingerprintContractVersion(value: string) {
+  if (value !== salesImportApprovalFingerprintContractVersion) {
+    throw new Error(
+      `Sales Import approval authorization requires ${salesImportApprovalFingerprintContractVersion}`,
+    );
   }
 }
 
@@ -283,7 +304,7 @@ export async function buildSalesImportApprovalFingerprint({
     ({ approvalStatus }) => approvalStatus === ImportApprovalStatus.APPROVED,
   );
   const lifecycleEligible =
-    graph.status === "COMPLETED" &&
+    graph.status === canonicalPersistentImportRunStatusContract.completed &&
     sources.length > 0 &&
     records.length > 0 &&
     everySourceHasRecords &&
@@ -295,6 +316,8 @@ export async function buildSalesImportApprovalFingerprint({
     fingerprintContractVersion: salesImportApprovalFingerprintContractVersion,
     fingerprintAlgorithm: salesImportApprovalFingerprintAlgorithm,
     canonicalizationVersion: salesImportApprovalCanonicalizationVersion,
+    persistentRunStatusContract: canonicalPersistentImportRunStatusContract,
+    readinessContractVersion: salesImportApprovalReadinessContractVersion,
     importRun: {
       id: graph.id,
       status: graph.status,
@@ -315,7 +338,8 @@ export async function buildSalesImportApprovalFingerprint({
     orderedSources: sourceInput,
     orderedCanonicalSalesRecords: recordInput,
     readiness: {
-      runCompleted: graph.status === "COMPLETED",
+      runCompleted:
+        graph.status === canonicalPersistentImportRunStatusContract.completed,
       sourceCount: sources.length,
       recordCount: records.length,
       everySourceHasRecords,
@@ -426,10 +450,12 @@ export function createSalesImportApprovalLifecycle({
     approveRecord({
       recordId,
       expectedFingerprint,
+      expectedFingerprintContractVersion,
       authorization,
       reason,
       reviewedAt = new Date(),
     }: SalesImportApprovalRequest & { recordId: string }) {
+      assertCurrentFingerprintContractVersion(expectedFingerprintContractVersion);
       return prisma.$transaction(async (transaction) => {
         const record = await transaction.canonicalSalesRecord.findUnique({
           where: { id: recordId },
@@ -470,10 +496,12 @@ export function createSalesImportApprovalLifecycle({
     approveSource({
       importSourceId,
       expectedFingerprint,
+      expectedFingerprintContractVersion,
       authorization,
       reason,
       reviewedAt = new Date(),
     }: SalesImportApprovalRequest & { importSourceId: string }) {
+      assertCurrentFingerprintContractVersion(expectedFingerprintContractVersion);
       return prisma.$transaction(async (transaction) => {
         const source = await transaction.importSource.findUnique({
           where: { id: importSourceId },
@@ -528,10 +556,12 @@ export function createSalesImportApprovalLifecycle({
     approveRun({
       importRunId,
       expectedFingerprint,
+      expectedFingerprintContractVersion,
       authorization,
       reason,
       reviewedAt = new Date(),
     }: SalesImportApprovalRequest & { importRunId: string }) {
+      assertCurrentFingerprintContractVersion(expectedFingerprintContractVersion);
       return prisma.$transaction(async (transaction) => {
         const run = await transaction.importRun.findUnique({
           where: { id: importRunId },
@@ -544,7 +574,7 @@ export function createSalesImportApprovalLifecycle({
         });
         assertFingerprint(current.fingerprint, expectedFingerprint);
         if (
-          run.status !== "COMPLETED" ||
+          run.status !== canonicalPersistentImportRunStatusContract.completed ||
           run.sources.length === 0 ||
           run.sources.some(
             ({ approvalStatus }) =>
@@ -552,7 +582,7 @@ export function createSalesImportApprovalLifecycle({
           )
         ) {
           throw new Error(
-            "ImportRun approval requires COMPLETED status and every ImportSource to be APPROVED",
+            "ImportRun approval requires canonical completed status and every ImportSource to be APPROVED",
           );
         }
         if (run.approvalStatus === ImportApprovalStatus.REJECTED) {

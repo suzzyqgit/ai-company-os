@@ -38,11 +38,11 @@ async function createPrismaClient() {
   };
 }
 
-async function createApprovedFixture(recordCount = 2) {
+async function createApprovedFixture(recordCount = 2, runStatus = "completed") {
   const product = await prisma.product.create({ data: { name: "Owner確定商品" } });
   const run = await prisma.importRun.create({
     data: {
-      status: "COMPLETED",
+      status: runStatus,
       importedAt: new Date("2026-07-24T00:00:00.000Z"),
       importedBy: "test",
       pipelineVersion: "v1",
@@ -133,6 +133,28 @@ test.beforeEach(async () => {
   await prisma.importRun.deleteMany();
   await prisma.article.deleteMany();
   await prisma.product.deleteMany();
+});
+
+test("promotion predicate accepts exact persisted completed status", async () => {
+  const fixture = await createApprovedFixture();
+  const plan = await buildDataLayerPromotionPlan({
+    prisma,
+    importRunId: fixture.run.id,
+    resolutions: fixture.resolutions,
+  });
+  assert.equal(plan.recordCount, fixture.records.length);
+});
+
+test("promotion predicate rejects noncanonical persisted COMPLETED status", async () => {
+  const fixture = await createApprovedFixture(2, "COMPLETED");
+  await assert.rejects(
+    buildDataLayerPromotionPlan({
+      prisma,
+      importRunId: fixture.run.id,
+      resolutions: fixture.resolutions,
+    }),
+    /ImportRun must be completed and approved/,
+  );
 });
 
 test("promotes approved records atomically with matching counts and amounts", async () => {

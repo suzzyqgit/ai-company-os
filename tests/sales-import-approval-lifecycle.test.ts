@@ -7,10 +7,13 @@ import test from "node:test";
 import { ImportApprovalStatus, PrismaClient } from "@prisma/client";
 import {
   buildSalesImportApprovalFingerprint,
+  canonicalPersistentImportRunStatusContract,
   createSalesImportApprovalLifecycle,
+  historicalSalesImportApprovalFingerprintContractVersionV1,
   salesImportApprovalCanonicalizationVersion,
   salesImportApprovalFingerprintAlgorithm,
   salesImportApprovalFingerprintContractVersion,
+  salesImportApprovalReadinessContractVersion,
   unavailableRuntimeCeoAuthorityVerifier,
   type SalesImportApprovalAuthorityVerifier,
   type SalesImportApprovalTarget,
@@ -99,11 +102,14 @@ class FixtureAuthorityVerifier implements SalesImportApprovalAuthorityVerifier {
   }
 }
 
-async function createFixture({ invalidRecord = false } = {}) {
+async function createFixture({
+  invalidRecord = false,
+  runStatus = "completed",
+}: { invalidRecord?: boolean; runStatus?: string } = {}) {
   const run = await prisma.importRun.create({
     data: {
       id: "run-approval-fixture",
-      status: "COMPLETED",
+      status: runStatus,
       completedAt: new Date("2026-09-01T23:59:00.000Z"),
       importedAt: new Date("2026-09-01T23:58:00.000Z"),
       importedBy: "isolated-test-importer",
@@ -205,6 +211,8 @@ async function authorizeAndApprove({
   });
   const request = {
     expectedFingerprint: fingerprint,
+    expectedFingerprintContractVersion:
+      salesImportApprovalFingerprintContractVersion,
     authorization: { decisionRef, authorityEvidence },
     reason: "isolated fixture approval",
     reviewedAt,
@@ -263,7 +271,7 @@ test.beforeEach(async () => {
   await prisma.product.deleteMany();
 });
 
-test("builds an equal deterministic fingerprint with explicitly ordered collections", async () => {
+test("builds an equal deterministic v2 fingerprint with explicitly ordered collections", async () => {
   const fixture = await createFixture();
   const first = await buildSalesImportApprovalFingerprint({
     prisma,
@@ -286,6 +294,14 @@ test("builds an equal deterministic fingerprint with explicitly ordered collecti
     first.canonicalInput.canonicalizationVersion,
     salesImportApprovalCanonicalizationVersion,
   );
+  assert.equal(
+    first.canonicalInput.readinessContractVersion,
+    salesImportApprovalReadinessContractVersion,
+  );
+  assert.deepEqual(
+    first.canonicalInput.persistentRunStatusContract,
+    canonicalPersistentImportRunStatusContract,
+  );
   const sources = first.canonicalInput.orderedSources as Array<{ id: string }>;
   const records = first.canonicalInput.orderedCanonicalSalesRecords as Array<{
     businessKey: string;
@@ -296,6 +312,27 @@ test("builds an equal deterministic fingerprint with explicitly ordered collecti
     [...records.map(({ businessKey }) => businessKey)].sort(),
   );
 });
+
+for (const [runStatus, expected] of [
+  ["completed", true],
+  ["failed", false],
+  ["review_required", false],
+  ["COMPLETED", false],
+] as const) {
+  test(`persistent Run status ${runStatus} produces runCompleted=${expected}`, async () => {
+    const fixture = await createFixture({ runStatus });
+    const result = await buildSalesImportApprovalFingerprint({
+      prisma,
+      importRunId: fixture.run.id,
+    });
+    const readiness = result.canonicalInput.readiness as {
+      runCompleted: boolean;
+      lifecycleEligible: boolean;
+    };
+    assert.equal(readiness.runCompleted, expected);
+    assert.equal(readiness.lifecycleEligible, expected);
+  });
+}
 
 test("changes the fingerprint when canonical Record content changes", async () => {
   const fixture = await createFixture();
@@ -329,6 +366,8 @@ test("fingerprint mismatch performs zero approval writes", async () => {
     lifecycle.approveRecord({
       recordId: fixture.records[0].id,
       expectedFingerprint: "f".repeat(64),
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: {
         decisionRef: "FORGED",
         authorityEvidence: "forged",
@@ -337,6 +376,31 @@ test("fingerprint mismatch performs zero approval writes", async () => {
       reason: "must not write",
     }),
     /fingerprint mismatch/,
+  );
+  assert.deepEqual(await approvalSnapshot(), before);
+});
+
+test("rejects a v1 fingerprint contract as v2 approval authorization input", async () => {
+  const fixture = await createFixture();
+  const before = await approvalSnapshot();
+  const fingerprint = await currentFingerprint(fixture.run.id);
+  const lifecycle = createSalesImportApprovalLifecycle({
+    prisma,
+    authorityVerifier: unavailableRuntimeCeoAuthorityVerifier,
+  });
+  assert.throws(
+    () => lifecycle.approveRecord({
+      recordId: fixture.records[0].id,
+      expectedFingerprint: fingerprint,
+      expectedFingerprintContractVersion:
+        historicalSalesImportApprovalFingerprintContractVersionV1,
+      authorization: {
+        decisionRef: "HISTORICAL-V1-DECISION",
+        authorityEvidence: "historical-v1-evidence",
+      },
+      reason: "v1 must not authorize a new transition",
+    }),
+    /requires sales-import-approval-sha256-canonical-json-v2/,
   );
   assert.deepEqual(await approvalSnapshot(), before);
 });
@@ -352,6 +416,8 @@ test("caller-forged CEO role is rejected when runtime binding is unavailable", a
     lifecycle.approveRecord({
       recordId: fixture.records[0].id,
       expectedFingerprint: await currentFingerprint(fixture.run.id),
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: {
         decisionRef: "caller-selected-decision",
         authorityEvidence: "caller-selected-evidence",
@@ -384,6 +450,8 @@ test("caller-forged decision reference is rejected by the verifier", async () =>
     lifecycle.approveRecord({
       recordId: fixture.records[0].id,
       expectedFingerprint: fingerprint,
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: {
         decisionRef: "FORGED-DECISION",
         authorityEvidence: "bound-evidence",
@@ -423,6 +491,8 @@ test("rejects an unversioned verifier identifier with zero approval writes", asy
     lifecycle.approveRecord({
       recordId: fixture.records[0].id,
       expectedFingerprint: fingerprint,
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: {
         decisionRef: "DEC-UNVERSIONED-VERIFIER",
         authorityEvidence: "fixture-evidence",
@@ -452,6 +522,8 @@ test("Record approval rejects failed canonical validation", async () => {
     lifecycle.approveRecord({
       recordId: invalid.id,
       expectedFingerprint: fingerprint,
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: {
         decisionRef: "DEC-INVALID",
         authorityEvidence: "fixture-evidence:DEC-INVALID",
@@ -506,6 +578,8 @@ test("blocks Source approval until all required child Records are APPROVED", asy
     lifecycle.approveSource({
       importSourceId: source.id,
       expectedFingerprint: fingerprint,
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: { decisionRef: "DEC-SOURCE-EARLY", authorityEvidence: "evidence" },
       reason: "too early",
     }),
@@ -532,6 +606,8 @@ test("blocks Run approval until every required Source is APPROVED", async () => 
     lifecycle.approveRun({
       importRunId: fixture.run.id,
       expectedFingerprint: await currentFingerprint(fixture.run.id),
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: { decisionRef: "DEC-RUN-EARLY", authorityEvidence: "evidence" },
       reason: "too early",
     }),
@@ -562,6 +638,8 @@ test("Source transition is atomic when a child gate fails", async () => {
     lifecycle.approveSource({
       importSourceId: source.id,
       expectedFingerprint: await currentFingerprint(fixture.run.id),
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: { decisionRef: "DEC-SOURCE-ATOMIC", authorityEvidence: "evidence" },
       reason: "must roll back",
     }),
@@ -593,6 +671,8 @@ test("Run transition is atomic when a Source gate fails", async () => {
     lifecycle.approveRun({
       importRunId: fixture.run.id,
       expectedFingerprint: await currentFingerprint(fixture.run.id),
+      expectedFingerprintContractVersion:
+        salesImportApprovalFingerprintContractVersion,
       authorization: { decisionRef: "DEC-RUN-ATOMIC", authorityEvidence: "evidence" },
       reason: "must roll back",
     }),
@@ -624,6 +704,8 @@ test("repeated invocation is idempotent and does not overwrite audit evidence", 
   const repeated = await lifecycle.approveRecord({
     recordId: record.id,
     expectedFingerprint: current,
+    expectedFingerprintContractVersion:
+      salesImportApprovalFingerprintContractVersion,
     authorization: {
       decisionRef: "DEC-IDEMPOTENT-RETRY",
       authorityEvidence: "fixture-evidence:DEC-IDEMPOTENT-RETRY",
