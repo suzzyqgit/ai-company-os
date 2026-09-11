@@ -283,7 +283,7 @@ Not claimed by Manifest v1.2:
 - Supersedes: `KAVORA_RUNTIME_MANIFEST_v1.1.md`
 - Intended Library path: `/KAVORA/Bootstrap/KAVORA_RUNTIME_MANIFEST_v1.2.md`
 - Current Permanent Operating Memory pointer: `/KAVORA/Governance/KAVORA_PERMANENT_OPERATING_MEMORY_v1.3.md` (file id: `file_000000006688820baed5de12e8b3b1a9`)
-- GitHub canonical registration: `NOT CONFIRMED` until an actual successful repository write is evidenced
+- GitHub canonical registration: `CONFIRMED` — registration commit `b11e83df0b71879b068bf66a10ce13e90f9f72a9`
 - KAVORA Global Pause: `ACTIVE OUTSIDE EXPLICIT OWNER EXCEPTIONS`
 - CEO Continuous Operating Mandate: `ACTIVE` — authority source is POM v1.3 §1A
 - CEO Hourly Operating Loop automation: `DISABLED` by explicit Owner instruction on 2026-09-11; disabling the automation does not itself revoke the standing CEO authority in POM §1A
