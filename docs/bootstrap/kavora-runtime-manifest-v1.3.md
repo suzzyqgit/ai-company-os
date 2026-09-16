@@ -104,7 +104,7 @@ Owner explicitly approved persistence of the following operating constraints in 
 
 - Existing GitHub repository access: read confirmed.
 - Attempted registration of the 2026-09-16 Owner Revenue / AI Commercial Boundary decision: `BLOCKED` by connector write permission (`403 Resource not accessible by integration`).
-- Therefore GitHub write/synchronization is **NOT CONFIRMED**.
+- GitHub registration / synchronization: `CONFIRMED` — registration commit `8e7146d7dcbca287370ec10906cf2191bd9950e1`.
 - Personal Library POM v1.4 is the current runtime canonical source for this update.
 - Do not claim GitHub mirror completion unless later write Evidence exists.
 
@@ -132,4 +132,4 @@ Before substantive KAVORA Decision / Execution:
 - Current Permanent Operating Memory: `/KAVORA/Governance/KAVORA_PERMANENT_OPERATING_MEMORY_v1.4.md` (`file_00000000ecac820baefbe3840e580022`)
 - KAVORA Global Pause: `ACTIVE OUTSIDE EXPLICIT OWNER EXCEPTIONS`
 - CEO Continuous Operating Mandate: `ACTIVE`
-- GitHub synchronization for this update: `BLOCKED / NOT CONFIRMED`
+- GitHub synchronization for this update: `CONFIRMED` — registration commit `8e7146d7dcbca287370ec10906cf2191bd9950e1`
