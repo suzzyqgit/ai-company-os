@@ -1,5 +1,9 @@
 # Governance Changelog
 
+## 2026-09-28
+
+- Registered KAVORA Permanent Operating Memory v2.1 and Runtime Manifest v2.1 as the current GitHub mirror. POM v2.1 adds the Owner-approved applicability boundary between exploration and KAVORA Decision / Execution mode; v2.0 remains preserved as historical evidence.
+
 ## 2026-09-19
 
 - Registered KAVORA Permanent Operating Memory v2.0 and Runtime Manifest v2.0 as the slim current runtime following Owner-approved governance de-bloat. Prior versions remain preserved as historical artifacts.

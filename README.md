@@ -54,16 +54,16 @@ stable public API.
 
 Start with the areas most relevant to your purpose:
 
-- [Current Runtime Manifest](docs/bootstrap/kavora-runtime-manifest-v2.0.md)
-- [Current Permanent Operating Memory](docs/governance/kavora-permanent-operating-memory-v2.0.md)
+- [Current Runtime Manifest](docs/bootstrap/kavora-runtime-manifest-v2.1.md)
+- [Current Permanent Operating Memory](docs/governance/kavora-permanent-operating-memory-v2.1.md)
 - [Governance Repository Index](docs/governance/REPOSITORY_INDEX.md)
 - [Architecture Baseline](docs/architecture/foundation/architecture-baseline-v1.0.md)
 - [Architecture Principles](docs/architecture/foundation/architecture-principles-v1.0.md)
 - [Role Profiles](docs/roles/)
 - [Repository Directory Standard](docs/repository/repository-directory-standard-v1.0.md)
 
-Superseded runtime documents remain in the repository for traceability. The v2.0
-Runtime Manifest and v2.0 Permanent Operating Memory are the current runtime
+Superseded runtime documents remain in the repository for traceability. The v2.1
+Runtime Manifest and v2.1 Permanent Operating Memory are the current runtime
 references.
 
 ## Local Development
