@@ -1,25 +1,25 @@
 ---
 title: AI Company OS Governance
-version: 1.0
-status: Approved
+version: 2.0
+status: Owner Approved / Pending Kernel Activation
 document_type: Repository Index
 classification: Governance
 owner: AI Company Owner
-maintainer: Chief AI Architect
+maintainer: KAVORA Operating AI
 repository: AI Company OS
-path: docs/governance/README.md
-last_updated: 2026-07-26
+path: docs/governance/REPOSITORY_INDEX.md
+last_updated: 2026-09-28
 ---
 
 # AI Company OS Governance Repository
 
 ## Overview
 
-This directory contains the official governance documents of **AI Company OS**.
+This directory contains the official governance records of **AI Company OS**.
 
-These documents define the organization's governance structure, executive responsibilities, decision-making framework, and operational principles.
+The Owner-approved v3.0 model uses one operating interface: **KAVORA Operating AI**. Product, Marketing, Finance/Revenue, Technical, and Risk/Evidence are internal reasoning lenses, not separate officers or authority holders.
 
-All governance documents in this repository are considered the **Single Source of Truth (SSOT)** for organizational governance.
+The GitHub repository is the canonical source for the v3.0 runtime artifacts after Kernel v3.0 is installed in the ChatGPT Project Instructions. Until that separate Owner action, Runtime v2.1 remains active.
 
 ---
 
@@ -27,29 +27,29 @@ All governance documents in this repository are considered the **Single Source o
 
 The purpose of this repository is to:
 
-- Define the governance of AI Company.
-- Standardize executive responsibilities.
+- Define the Owner / KAVORA Operating AI governance boundary.
+- Preserve Owner-reserved authority and evidence requirements.
 - Establish organization-wide decision-making principles.
-- Ensure long-term consistency across all AI executives.
-- Provide a stable foundation for future operational standards.
+- Keep the active runtime minimal and repository-canonical.
+- Preserve superseded executive artifacts for historical traceability.
 
 ---
 
-# Governance Hierarchy
+# Governance Model
 
 ```
-AI Executive Charter
-│
-├── CEO Directive
-├── CPO Directive
-├── CMO Directive
-├── Chief AI Architect Directive
-└── Chief Software Engineer Directive
+Owner
+└── KAVORA Operating AI
+    ├── Product lens
+    ├── Marketing lens
+    ├── Finance / Revenue lens
+    ├── Technical lens
+    └── Risk / Evidence lens
 ```
 
-The **AI Executive Charter** is the highest-level governance document.
+The Owner retains final authority and all Owner-reserved decisions. Lenses are reasoning perspectives only; they are not roles, chats, approval stages, or authority holders.
 
-All directives, standards, and future governance documents must comply with the Charter.
+After activation, the Project Runtime Kernel v3.0, Runtime Manifest v3.0, and Permanent Operating Memory v3.0 form the active runtime set. Former executive role profiles, directives, and the multi-executive charter remain preserved as Legacy / Historical records.
 
 ---
 
@@ -57,15 +57,16 @@ All directives, standards, and future governance documents must comply with the 
 
 ```
 docs/
-└── governance/
-    ├── README.md
-    ├── AI_Executive_Charter_v1.0.md
-    ├── CEO_Directive_v3.0.md
-    ├── CPO_Directive_v3.0.md
-    ├── CMO_Directive_v3.0.md
-    ├── Chief_AI_Architect_Directive_v3.0.md
-    ├── Chief_Software_Engineer_Directive_v3.0.md
-    └── CHANGELOG.md
+├── bootstrap/
+│   ├── kavora-project-runtime-kernel-v3.0.md
+│   └── kavora-runtime-manifest-v3.0.md
+├── governance/
+│   ├── kavora-permanent-operating-memory-v3.0.md
+│   ├── REPOSITORY_INDEX.md
+│   ├── CHANGELOG.md
+│   └── legacy executive directives and records
+└── roles/
+    └── legacy executive profiles and registry records
 ```
 
 ---
@@ -74,12 +75,15 @@ docs/
 
 | Document | Version | Status | Description |
 |----------|---------|--------|-------------|
-| [AI Executive Charter](./AI_Executive_Charter_v1.0.md) | 1.0 | Approved | Highest governance document defining organizational principles. |
-| [CEO Directive](./CEO_Directive_v3.0.md) | 3.0 | Approved | Defines the responsibilities and authority of the CEO. |
-| [CPO Directive](./CPO_Directive_v3.0.md) | 3.0 | Approved | Defines product strategy and portfolio management responsibilities. |
-| [CMO Directive](./CMO_Directive_v3.0.md) | 3.0 | Approved | Defines marketing strategy and sales system responsibilities. |
-| [Chief AI Architect Directive](./Chief_AI_Architect_Directive_v3.0.md) | 3.0 | Approved | Defines enterprise architecture and governance responsibilities. |
-| [Chief Software Engineer Directive](./Chief_Software_Engineer_Directive_v3.0.md) | 3.0 | Approved | Defines software implementation and engineering responsibilities. |
+| [Project Runtime Kernel](../bootstrap/kavora-project-runtime-kernel-v3.0.md) | 3.0 | Prepared / Pending Project Instructions Activation | Defines the single KAVORA Operating AI runtime bootloader. |
+| [Runtime Manifest](../bootstrap/kavora-runtime-manifest-v3.0.md) | 3.0 | Prepared / Pending Project Instructions Activation | Resolves the v3.0 repository-canonical runtime set. |
+| [Permanent Operating Memory](./kavora-permanent-operating-memory-v3.0.md) | 3.0 | Owner Approved / Pending Kernel Activation | Defines permanent operating rules for KAVORA decision and execution. |
+| [AI Executive Charter](./AI_Executive_Charter_v1.0.md) | 1.0 | Legacy / Historical after v3.0 activation | Preserved multi-executive-era governance record. |
+| [CEO Directive](./CEO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
+| [CPO Directive](./CPO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
+| [CMO Directive](./CMO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
+| [Chief AI Architect Directive](./Chief_AI_Architect_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
+| [Chief Software Engineer Directive](./Chief_Software_Engineer_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
 
 ---
 
@@ -96,7 +100,7 @@ AI Company operates under the following principles:
 - Simplicity First
 - Long-term Sustainability
 
-These principles apply to every executive, project, and future governance document.
+These principles apply to KAVORA operations, projects, and future governance documents.
 
 ---
 
@@ -154,11 +158,11 @@ Unapproved changes must not be treated as official governance.
 
 ---
 
-# Relationship to Other Repositories
+# Relationship to Other Repository Areas
 
-This repository defines governance only.
+This governance index covers the runtime and governance records in this repository.
 
-Other repositories include:
+Related repository areas include:
 
 - Standards
 - Architecture
@@ -166,7 +170,7 @@ Other repositories include:
 - Business
 - Knowledge Base
 
-Governance documents have the highest authority among repository documents.
+Runtime precedence is defined by the current activated Project Runtime Kernel and Runtime Manifest. The Owner remains the final authority.
 
 ---
 
@@ -180,14 +184,14 @@ Responsible for:
 
 - Governance approval
 - Organizational direction
-- Executive appointment
+- Operating-model decisions
 - Final authority
 
 ---
 
-# Maintainer
+# Maintainer After Activation
 
-**Chief AI Architect**
+**KAVORA Operating AI**
 
 Responsible for:
 
@@ -200,12 +204,10 @@ Responsible for:
 
 # Related Documents
 
-- AI Executive Charter
-- CEO Directive
-- CPO Directive
-- CMO Directive
-- Chief AI Architect Directive
-- Chief Software Engineer Directive
+- Project Runtime Kernel v3.0
+- Runtime Manifest v3.0
+- Permanent Operating Memory v3.0
+- Legacy executive governance records
 - CHANGELOG
 
 ---
@@ -215,8 +217,12 @@ Responsible for:
 | Item | Status |
 |------|--------|
 | Repository | Active |
-| Governance Version | 1.0 |
-| Approval Status | Approved |
+| Governance Model | Owner → KAVORA Operating AI |
+| Governance Version | 3.0 migration prepared |
+| Owner Decision | Confirmed |
+| Project Instructions Activation | Pending separate Owner UI action |
+| Active Runtime Until Activation | v2.1 |
+| Former Executive Artifacts | Preserved; Legacy / Historical after activation |
 | Repository Type | Official Governance Repository |
 
 ---

@@ -8,9 +8,10 @@ This repository is the official Source of Truth for the project.
 
 ## Purpose
 
-AI Company OS enables AI roles to collaborate through shared governance,
-architecture, operational data, and continuous organizational learning. It keeps
-operating rules and implementation evidence close to the software they govern.
+AI Company OS enables KAVORA Operating AI to coordinate work through shared
+governance, architecture, operational data, and continuous organizational
+learning. It keeps operating rules and implementation evidence close to the
+software they govern.
 
 ## Status and Scope
 
@@ -45,7 +46,7 @@ stable public API.
 | `docs/governance/` | Governance records and current permanent operating memory |
 | `docs/bootstrap/` | Runtime bootstrap and manifest artifacts |
 | `docs/architecture/` | Architecture foundations, domains, contracts, and validation |
-| `docs/roles/` | Current role profiles and role registry material |
+| `docs/roles/` | Preserved executive role profiles and role registry history |
 | `docs/knowledge/` | Preserved organizational knowledge and evidence |
 | `docs/repository/` | Repository conventions and registration records |
 | `docs/standards/` | Task-specific and operational standards |
@@ -54,17 +55,20 @@ stable public API.
 
 Start with the areas most relevant to your purpose:
 
-- [Current Runtime Manifest](docs/bootstrap/kavora-runtime-manifest-v2.1.md)
-- [Current Permanent Operating Memory](docs/governance/kavora-permanent-operating-memory-v2.1.md)
+- [Current Runtime Manifest](docs/bootstrap/kavora-runtime-manifest-v3.0.md)
+- [Project Runtime Kernel v3.0 Mirror](docs/bootstrap/kavora-project-runtime-kernel-v3.0.md)
+- [Current Permanent Operating Memory](docs/governance/kavora-permanent-operating-memory-v3.0.md)
 - [Governance Repository Index](docs/governance/REPOSITORY_INDEX.md)
 - [Architecture Baseline](docs/architecture/foundation/architecture-baseline-v1.0.md)
 - [Architecture Principles](docs/architecture/foundation/architecture-principles-v1.0.md)
-- [Role Profiles](docs/roles/)
+- [Legacy Role Profiles](docs/roles/)
 - [Repository Directory Standard](docs/repository/repository-directory-standard-v1.0.md)
 
-Superseded runtime documents remain in the repository for traceability. The v2.1
-Runtime Manifest and v2.1 Permanent Operating Memory are the current runtime
-references.
+The v3.0 Kernel, Runtime Manifest, and Permanent Operating Memory are the
+repository-canonical migration set. Activation remains pending the Owner's
+separate replacement of the ChatGPT Project Instructions; Runtime v2.1 remains
+active until that action. Superseded runtime documents and former executive role
+artifacts remain preserved for traceability.
 
 ## Local Development
 
