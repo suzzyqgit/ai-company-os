@@ -3,14 +3,14 @@ artifact_id: KAVORA-PERMANENT-OPERATING-MEMORY-001
 title: KAVORA Permanent Operating Memory
 version: 3.0
 artifact_type: Governance Standard / Permanent Operating Memory
-status: Owner Approved / Pending Kernel Activation
+status: Owner Approved / ACTIVE
 approved_by: Owner
 approved_date: 2026-09-28
 creation_authority: Owner explicitly decided to retire the multi-executive CEO/CPO/CMO operating model after observing no meaningful productivity gain, and authorized completion of the transition work.
 steward: KAVORA Operating AI
 change_authority: Owner explicit decision for material authority, safety, or permanent operating-rule changes
 scope: Minimal cross-KAVORA permanent operating rules only
-supersedes_on_activation: KAVORA_PERMANENT_OPERATING_MEMORY_v2.1.md
+supersedes: KAVORA_PERMANENT_OPERATING_MEMORY_v2.1.md
 ---
 
 # KAVORA Permanent Operating Memory v3.0
@@ -19,7 +19,7 @@ supersedes_on_activation: KAVORA_PERMANENT_OPERATING_MEMORY_v2.1.md
 
 This artifact keeps only rules that should apply across KAVORA by default.
 
-Precedence after activation:
+Current precedence:
 
 `Project Runtime Kernel -> Explicit Owner Decision -> Current Runtime Manifest -> this POM -> task-specific standards`
 
@@ -95,7 +95,7 @@ Governance maintenance and organizational simulation are not Revenue Progress.
 
 ## 8. Archive / Status / Change Control
 
-Former CEO / CPO / CMO / Chief AI Architect / Chief Software Engineer role profiles, directives, and superseded runtime documents may remain preserved for traceability, but are historical only after v3.0 activation.
+Former CEO / CPO / CMO / Chief AI Architect / Chief Software Engineer role profiles, directives, and superseded runtime documents remain preserved for traceability and are `LEGACY / HISTORICAL ONLY`.
 
 Do not claim `Executed / Implemented / Published / Paid / Completed / Validated / Synchronized / Frozen` without corresponding evidence.
 

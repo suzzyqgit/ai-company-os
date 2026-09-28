@@ -1,7 +1,7 @@
 ---
 title: AI Company OS Governance
 version: 2.0
-status: Owner Approved / Pending Kernel Activation
+status: Owner Approved / ACTIVE
 document_type: Repository Index
 classification: Governance
 owner: AI Company Owner
@@ -19,7 +19,7 @@ This directory contains the official governance records of **AI Company OS**.
 
 The Owner-approved v3.0 model uses one operating interface: **KAVORA Operating AI**. Product, Marketing, Finance/Revenue, Technical, and Risk/Evidence are internal reasoning lenses, not separate officers or authority holders.
 
-The GitHub repository is the canonical source for the v3.0 runtime artifacts after Kernel v3.0 is installed in the ChatGPT Project Instructions. Until that separate Owner action, Runtime v2.1 remains active.
+The GitHub repository is the canonical source for the v3.0 runtime artifacts. Kernel v3.0 is installed in the ChatGPT Project Instructions, and activation is `CONFIRMED`. Runtime v2.1 is `SUPERSEDED / HISTORICAL`.
 
 ---
 
@@ -49,7 +49,7 @@ Owner
 
 The Owner retains final authority and all Owner-reserved decisions. Lenses are reasoning perspectives only; they are not roles, chats, approval stages, or authority holders.
 
-After activation, the Project Runtime Kernel v3.0, Runtime Manifest v3.0, and Permanent Operating Memory v3.0 form the active runtime set. Former executive role profiles, directives, and the multi-executive charter remain preserved as Legacy / Historical records.
+The Project Runtime Kernel v3.0, Runtime Manifest v3.0, and Permanent Operating Memory v3.0 form the active runtime set. Former executive role profiles, directives, and the multi-executive charter remain preserved as `LEGACY / HISTORICAL ONLY` records.
 
 ---
 
@@ -75,15 +75,15 @@ docs/
 
 | Document | Version | Status | Description |
 |----------|---------|--------|-------------|
-| [Project Runtime Kernel](../bootstrap/kavora-project-runtime-kernel-v3.0.md) | 3.0 | Prepared / Pending Project Instructions Activation | Defines the single KAVORA Operating AI runtime bootloader. |
-| [Runtime Manifest](../bootstrap/kavora-runtime-manifest-v3.0.md) | 3.0 | Prepared / Pending Project Instructions Activation | Resolves the v3.0 repository-canonical runtime set. |
-| [Permanent Operating Memory](./kavora-permanent-operating-memory-v3.0.md) | 3.0 | Owner Approved / Pending Kernel Activation | Defines permanent operating rules for KAVORA decision and execution. |
-| [AI Executive Charter](./AI_Executive_Charter_v1.0.md) | 1.0 | Legacy / Historical after v3.0 activation | Preserved multi-executive-era governance record. |
-| [CEO Directive](./CEO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
-| [CPO Directive](./CPO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
-| [CMO Directive](./CMO_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
-| [Chief AI Architect Directive](./Chief_AI_Architect_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
-| [Chief Software Engineer Directive](./Chief_Software_Engineer_Directive_v3.0.md) | 3.0 | Legacy / Historical after v3.0 activation | Preserved former executive directive. |
+| [Project Runtime Kernel](../bootstrap/kavora-project-runtime-kernel-v3.0.md) | 3.0 | ACTIVE / Project Instructions Confirmed | Defines the single KAVORA Operating AI runtime bootloader. |
+| [Runtime Manifest](../bootstrap/kavora-runtime-manifest-v3.0.md) | 3.0 | ACTIVE | Resolves the v3.0 repository-canonical runtime set. |
+| [Permanent Operating Memory](./kavora-permanent-operating-memory-v3.0.md) | 3.0 | Owner Approved / ACTIVE | Defines permanent operating rules for KAVORA decision and execution. |
+| [AI Executive Charter](./AI_Executive_Charter_v1.0.md) | 1.0 | LEGACY / HISTORICAL ONLY | Preserved multi-executive-era governance record. |
+| [CEO Directive](./CEO_Directive_v3.0.md) | 3.0 | LEGACY / HISTORICAL ONLY | Preserved former executive directive. |
+| [CPO Directive](./CPO_Directive_v3.0.md) | 3.0 | LEGACY / HISTORICAL ONLY | Preserved former executive directive. |
+| [CMO Directive](./CMO_Directive_v3.0.md) | 3.0 | LEGACY / HISTORICAL ONLY | Preserved former executive directive. |
+| [Chief AI Architect Directive](./Chief_AI_Architect_Directive_v3.0.md) | 3.0 | LEGACY / HISTORICAL ONLY | Preserved former executive directive. |
+| [Chief Software Engineer Directive](./Chief_Software_Engineer_Directive_v3.0.md) | 3.0 | LEGACY / HISTORICAL ONLY | Preserved former executive directive. |
 
 ---
 
@@ -189,7 +189,7 @@ Responsible for:
 
 ---
 
-# Maintainer After Activation
+# Maintainer
 
 **KAVORA Operating AI**
 
@@ -218,11 +218,12 @@ Responsible for:
 |------|--------|
 | Repository | Active |
 | Governance Model | Owner → KAVORA Operating AI |
-| Governance Version | 3.0 migration prepared |
+| Governance Version | 3.0 active |
 | Owner Decision | Confirmed |
-| Project Instructions Activation | Pending separate Owner UI action |
-| Active Runtime Until Activation | v2.1 |
-| Former Executive Artifacts | Preserved; Legacy / Historical after activation |
+| Project Instructions Activation | CONFIRMED |
+| Active Runtime | v3.0 |
+| Runtime v2.1 | SUPERSEDED / HISTORICAL |
+| Former Executive Artifacts | Preserved; LEGACY / HISTORICAL ONLY |
 | Repository Type | Official Governance Repository |
 
 ---

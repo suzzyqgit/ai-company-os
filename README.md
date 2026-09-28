@@ -64,11 +64,11 @@ Start with the areas most relevant to your purpose:
 - [Legacy Role Profiles](docs/roles/)
 - [Repository Directory Standard](docs/repository/repository-directory-standard-v1.0.md)
 
-The v3.0 Kernel, Runtime Manifest, and Permanent Operating Memory are the
-repository-canonical migration set. Activation remains pending the Owner's
-separate replacement of the ChatGPT Project Instructions; Runtime v2.1 remains
-active until that action. Superseded runtime documents and former executive role
-artifacts remain preserved for traceability.
+The v3.0 Kernel, Runtime Manifest, and Permanent Operating Memory are the active
+repository-canonical runtime set. Kernel v3.0 is installed in the ChatGPT
+Project Instructions, and activation is confirmed. Runtime v2.1 is superseded
+and historical. Former executive role artifacts remain preserved as
+`LEGACY / HISTORICAL ONLY` for traceability.
 
 ## Local Development
 
