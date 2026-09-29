@@ -8,6 +8,10 @@ owner: Chief AI Architect
 approval_authority: CEO
 ---
 
+> **Runtime applicability — 2026-09-30:** The former executive / Role Lock bootstrap provisions are SUPERSEDED / HISTORICAL ONLY and must not be loaded during normal bootstrap. The original Approved record and other knowledge-preservation provisions remain preserved; task-specific use is subject to the current v3.0 runtime. This is not a repeal of all provisions of this standard.
+> Current bootstrap: [Runtime Manifest v3.0](../../bootstrap/kavora-runtime-manifest-v3.0.md). This annotation implements the existing v3.0 transition; it creates no new authority. Original text below is retained for traceability.
+
+
 # Executive Bootstrap Standard v1.0
 
 ## Purpose

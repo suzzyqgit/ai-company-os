@@ -1,5 +1,11 @@
 # Governance Changelog
 
+## 2026-09-30
+
+- Applied Owner-requested historical-runtime annotations to legacy Role Lock artifacts and Runtime Manifests v1.2, v1.3, v2.0 and v2.1. Preserved original bodies and paths; recorded historical manifest status separately.
+- Clarified runtime applicability of executive knowledge standards and dated Owner strategic context; retained historical approvals and business objectives. Knowledge entry points defer to v3.0.
+- Added a non-sensitive private Owner context pointer with storage/activation explicitly unconfirmed. No private values, new Canonical Decision, runtime authority change, deletion or architecture redesign.
+
 ## 2026-09-28
 
 - Confirmed KAVORA Runtime v3.0 activation after Kernel v3.0 installation in the ChatGPT Project Instructions. Runtime Manifest v3.0 is `ACTIVE`, Permanent Operating Memory v3.0 is `Owner Approved / ACTIVE`, Runtime v2.1 is `SUPERSEDED / HISTORICAL`, and former executive role artifacts remain preserved as `LEGACY / HISTORICAL ONLY`. GitHub registration evidence: `30ae3185c88d3c7e5995ec2ae21d740c33394dc3`.

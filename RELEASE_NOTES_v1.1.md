@@ -1,3 +1,7 @@
+
+> **Runtime applicability — 2026-09-30:** SUPERSEDED / HISTORICAL ONLY. Do not load or execute this artifact during normal bootstrap. Historical approval, lifecycle, role assignments and current-status statements below do not activate it under v3.0.
+> Current bootstrap: [Runtime Manifest v3.0](docs/bootstrap/kavora-runtime-manifest-v3.0.md). This annotation implements the existing v3.0 transition; it creates no new authority. Original text below is retained for traceability.
+
 # KAVORA Role Lock v1.1 — Complete Package / Pre-Freeze
 
 ## Package Purpose

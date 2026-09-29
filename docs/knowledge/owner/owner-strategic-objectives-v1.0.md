@@ -14,6 +14,10 @@ related_artifacts:
   - docs/knowledge/standards/knowledge-repository-standard-v1.0.md
 ---
 
+> **Runtime applicability — 2026-09-30:** Historical Owner context dated 2026-08-12; not a current runtime or a current personal-finance source. Former executive ownership and approval references are historical. Business objectives are preserved, not revoked or re-approved; time-sensitive assumptions require current Owner confirmation. Owner personal context uses a private canonical source; its storage location and activation are not yet confirmed. Do not add private personal context here.
+> Current bootstrap: [Runtime Manifest v3.0](../../bootstrap/kavora-runtime-manifest-v3.0.md). This annotation implements the existing v3.0 transition; it creates no new authority. Original text below is retained for traceability.
+
+
 # KAVORA Owner Strategic Objectives v1.0
 
 ## Purpose

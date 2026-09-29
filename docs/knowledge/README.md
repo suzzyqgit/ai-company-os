@@ -1,3 +1,7 @@
+
+> **Runtime applicability — 2026-09-30:** Normal bootstrap uses only the v3.0 runtime set and materially required task-specific standards. References below to future roles or approved standards do not require bulk loading of historical executive knowledge or superseded Role Lock bootstrap.
+> Current bootstrap: [Runtime Manifest v3.0](../bootstrap/kavora-runtime-manifest-v3.0.md). This annotation implements the existing v3.0 transition; it creates no new authority. Original text below is retained for traceability.
+
 # Knowledge Layer
 
 ## Purpose

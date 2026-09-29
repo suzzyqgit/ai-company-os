@@ -2,7 +2,8 @@
 artifact_id: KAVORA-RUNTIME-MANIFEST-001
 title: KAVORA Runtime Manifest
 version: 1.3
-status: Active
+status: SUPERSEDED / HISTORICAL
+historical_status: Active
 organization: KAVORA
 operating_platform: AI Company OS
 created_date: 2026-09-16
@@ -13,6 +14,10 @@ pointer_maintenance: CEO may update a pointer only when an explicitly approved/s
 supersedes: KAVORA_RUNTIME_MANIFEST_v1.2.md
 runtime_purpose: Resolve the minimum current artifacts that must be loaded before substantive KAVORA decision or execution
 ---
+
+> **Runtime applicability — 2026-09-30:** SUPERSEDED / HISTORICAL ONLY. Do not load or execute this artifact during normal bootstrap. Historical approval, lifecycle, role assignments and current-status statements below do not activate it under v3.0.
+> Current bootstrap: [Runtime Manifest v3.0](kavora-runtime-manifest-v3.0.md). This annotation implements the existing v3.0 transition; it creates no new authority. Original text below is retained for traceability.
+
 
 # KAVORA Runtime Manifest v1.3
 
