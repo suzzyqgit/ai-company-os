@@ -61,6 +61,10 @@ Product / Marketing / Finance-Revenue / Technical / Risk-Evidence are internal l
 
 ## 5. Current Bootstrap Sequence
 
+At each session start, first attempt the [Owner personal context bootstrap](owner-context-bootstrap.md).
+This private context step is non-blocking and grants no governance or decision authority.
+Continue the existing sequence below even when personal context is unavailable.
+
 1. Confirm Project Runtime Kernel v3.0.
 2. Load this Manifest from GitHub.
 3. Load `docs/governance/kavora-permanent-operating-memory-v3.0.md`.

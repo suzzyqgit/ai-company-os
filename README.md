@@ -70,8 +70,9 @@ Project Instructions, and activation is confirmed. Runtime v2.1 is superseded
 and historical. Former executive role artifacts remain preserved as
 `LEGACY / HISTORICAL ONLY` for traceability.
 
-Owner personal context uses a private canonical source. Its storage location and
-activation are not yet confirmed; private personal context must not be added here.
+Owner personal context is loaded from a private canonical source through the
+[session bootstrap](docs/bootstrap/owner-context-bootstrap.md). Private personal
+context must not be added here.
 
 ## Local Development
 
