@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any
 
 WIDTH, HEIGHT, FPS = 1080, 1920, 30
-TOP_RATIO = 0.46
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm"}
 EPSILON = 1e-3
@@ -92,8 +91,11 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
     for key, expected in (("width", WIDTH), ("height", HEIGHT), ("fps", FPS)):
         if type(video.get(key)) is not int or video[key] != expected:
             errors.append(f"video.{key} must be {expected}")
-    if not _number(video.get("top_ratio")) or not math.isclose(video["top_ratio"], TOP_RATIO, abs_tol=1e-9):
-        errors.append("video.top_ratio must be 0.46")
+    top_ratio = video.get("top_ratio")
+    if not _number(top_ratio) or not 0 < top_ratio < 1:
+        errors.append("video.top_ratio must be between 0 and 1 (exclusive)")
+    elif not 1 <= round(HEIGHT * top_ratio) < HEIGHT:
+        errors.append("video.top_ratio must allocate at least one pixel to each lane")
     duration = video.get("duration")
     if not _number(duration) or duration <= 0:
         errors.append("video.duration must be positive")
@@ -139,7 +141,7 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
             if not isinstance(spec, dict) or not isinstance(spec.get("path"), str) or not spec["path"].strip():
                 errors.append(f"{prefix}.{lane}.path is required")
                 continue
-            _unknown(spec, {"path", "in", "out", "loop", "fit"}, f"{prefix}.{lane}", errors)
+            _unknown(spec, {"path", "in", "out", "loop", "fit", "focus_x", "focus_y"}, f"{prefix}.{lane}", errors)
             path = _path(base, spec["path"])
             asset_paths.add(path)
             extension = path.suffix.lower()
@@ -153,6 +155,10 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
                 continue
             if type(spec.get("loop", False)) is not bool or spec.get("fit", "cover") not in ("cover", "contain"):
                 errors.append(f"{prefix}.{lane} has invalid loop/fit")
+            for axis in ("focus_x", "focus_y"):
+                focus = spec.get(axis, 0.5)
+                if not _number(focus) or not 0 <= focus <= 1:
+                    errors.append(f"{prefix}.{lane}.{axis} must be between 0 and 1")
             span = end - start
             if lane == "top_media":
                 if extension in IMAGE_EXTENSIONS:
@@ -206,6 +212,8 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
             errors.append(f"{prefix} exceeds video.duration")
         if not isinstance(content, str) or not content.strip():
             errors.append(f"{prefix}.text must be non-empty")
+        elif len(content.split("\n")) > 2:
+            errors.append(f"{prefix} exceeds two subtitle lines")
         emphasis = cue.get("emphasis")
         if emphasis is not None and (not isinstance(emphasis, str) or not emphasis or not isinstance(content, str) or emphasis not in content):
             errors.append(f"{prefix}.emphasis must occur in text")
@@ -215,7 +223,8 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
         errors.append("style must be an object")
         style = {}
     _unknown(style, {"font", "font_size", "subtitle_y", "subtitle_width", "text_color",
-                     "emphasis_color", "stroke_color", "stroke_width"}, "style", errors)
+                     "emphasis_color", "stroke_color", "stroke_width", "subtitle_x",
+                     "subtitle_anchor", "subtitle_margin_x", "subtitle_margin_y", "line_spacing"}, "style", errors)
     if subtitles:
         font = style.get("font")
         if not isinstance(font, str) or not font:
@@ -223,14 +232,20 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
         elif require_assets and not _path(base, font).is_file():
             errors.append(f"missing asset: {_path(base, font)}")
     for key, minimum, maximum in (("font_size", 1, HEIGHT), ("subtitle_y", 0, HEIGHT - 1),
-                                   ("subtitle_width", 1, WIDTH), ("stroke_width", 0, HEIGHT)):
+                                   ("subtitle_x", 0, WIDTH), ("subtitle_width", 1, WIDTH),
+                                   ("stroke_width", 0, HEIGHT), ("line_spacing", 0, HEIGHT),
+                                   ("subtitle_margin_x", 0, WIDTH // 2),
+                                   ("subtitle_margin_y", 0, HEIGHT // 2)):
         if key in style and (type(style[key]) is not int or not minimum <= style[key] <= maximum):
             errors.append(f"style.{key} must be an integer from {minimum} to {maximum}")
     for key in ("text_color", "emphasis_color", "stroke_color"):
         if key in style and not isinstance(style[key], str):
             errors.append(f"style.{key} must be a color string")
-    if _number(style.get("subtitle_y", 1380)) and _number(style.get("font_size", 58)) and style.get("subtitle_y", 1380) + style.get("font_size", 58) * 3 > HEIGHT:
-        errors.append("subtitle style extends beyond canvas")
+    if style.get("subtitle_anchor", "top") not in ("top", "center"):
+        errors.append("style.subtitle_anchor must be top or center")
+    x, width, margin = style.get("subtitle_x", WIDTH // 2), style.get("subtitle_width", 980), style.get("subtitle_margin_x", 40)
+    if all(_number(v) for v in (x, width, margin)) and (x - width / 2 < margin or x + width / 2 > WIDTH - margin):
+        errors.append("subtitle horizontal bounds violate subtitle_margin_x")
 
     for key, multiple in (("voice", False), ("bgm", False), ("sound_effects", True)):
         value = data.get(key, [] if multiple else None)
@@ -271,18 +286,22 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
     if require_assets and subtitles and not errors:
         try:
             for cue in subtitles:
-                _subtitle_image(cue, style, base)
+                image = _subtitle_image(cue, style, base)
+                _subtitle_position(style, image.width, image.height)
         except (OSError, ValueError) as exc:
             errors.append(f"subtitle preflight failed: {exc}")
     return errors
 
 
-def _fit(clip: Any, width: int, height: int, fit: str, color: tuple[int, int, int]) -> Any:
+def _fit(clip: Any, width: int, height: int, fit: str, color: tuple[int, int, int],
+         focus_x: float = 0.5, focus_y: float = 0.5) -> Any:
     from moviepy import ColorClip, CompositeVideoClip
     factor = min(width / clip.w, height / clip.h) if fit == "contain" else max(width / clip.w, height / clip.h)
     resized = clip.resized(factor)
     if fit == "cover":
-        return resized.cropped(x_center=resized.w / 2, y_center=resized.h / 2, width=width, height=height)
+        x1 = round(max(0, min(resized.w - width, resized.w * focus_x - width / 2)))
+        y1 = round(max(0, min(resized.h - height, resized.h * focus_y - height / 2)))
+        return resized.cropped(x1=x1, y1=y1, width=width, height=height)
     return CompositeVideoClip([ColorClip((width, height), color=color, duration=clip.duration), resized.with_position("center")], size=(width, height))
 
 
@@ -302,7 +321,53 @@ def _media(spec: dict[str, Any], base: Path, span: float, width: int, height: in
             clip = clip.with_effects([vfx.Loop(duration=span)])
         else:
             clip = clip.subclipped(0, span)
-    return _fit(clip, width, height, spec.get("fit", "cover"), color).with_duration(span)
+    return _fit(clip, width, height, spec.get("fit", "cover"), color,
+                spec.get("focus_x", 0.5), spec.get("focus_y", 0.5)).with_duration(span)
+
+
+def _subtitle_lines(text: str, font: Any, width: int, stroke: int) -> list[tuple[int, int]]:
+    from PIL import Image, ImageDraw
+    draw = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    lines: list[tuple[int, int]] = []
+    offset = 0
+    # Retain original text indices so emphasis survives wrapping and explicit newlines.
+    for paragraph in text.split("\n"):
+        if not paragraph.strip():
+            raise ValueError("subtitle contains an empty line")
+        start, stop = offset, offset + len(paragraph)
+        while start < stop:
+            end = start
+            while end < stop:
+                box = draw.textbbox((0, 0), text[start:end + 1], font=font, stroke_width=stroke)
+                if box[2] - box[0] > width:
+                    break
+                end += 1
+            if end == start:
+                raise ValueError("subtitle_width cannot fit a single glyph")
+            if end < stop and not text[end].isspace():
+                spaces = [i for i in range(start + 1, end) if text[i].isspace()]
+                if spaces:
+                    end = spaces[-1]
+            lines.append((start, end))
+            if len(lines) > 2:
+                raise ValueError("subtitle exceeds two lines after wrapping")
+            start = end
+            while start < stop and text[start].isspace():
+                start += 1
+        offset = stop + 1
+    return lines
+
+
+def _subtitle_position(style: dict[str, Any], width: int, height: int) -> tuple[int, int]:
+    left = round(style.get("subtitle_x", WIDTH // 2) - width / 2)
+    y = style.get("subtitle_y", 1380)
+    top = round(y - height / 2) if style.get("subtitle_anchor", "top") == "center" else y
+    margin_x, margin_y = style.get("subtitle_margin_x", 40), style.get("subtitle_margin_y", 0)
+    if left < margin_x or left + width > WIDTH - margin_x:
+        raise ValueError("subtitle horizontal bounds violate subtitle_margin_x")
+    if top < margin_y or top + height > HEIGHT - margin_y:
+        raise ValueError("subtitle vertical bounds violate canvas/safe area")
+    return left, top
 
 
 def _subtitle_image(cue: dict[str, Any], style: dict[str, Any], base: Path) -> Any:
@@ -312,20 +377,30 @@ def _subtitle_image(cue: dict[str, Any], style: dict[str, Any], base: Path) -> A
     text, emphasis = cue["text"], cue.get("emphasis")
     width = style.get("subtitle_width", 980)
     stroke = style.get("stroke_width", 4)
-    image = Image.new("RGBA", (width, style.get("font_size", 58) * 3), (0, 0, 0, 0))
+    padding = stroke + 2
+    lines = _subtitle_lines(text, font, width - 2 * padding, stroke)
+    measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    boxes = [measure.textbbox((0, 0), text[start:end], font=font, stroke_width=stroke, anchor="ls") for start, end in lines]
+    spacing = style.get("line_spacing", 12)
+    height = sum(box[3] - box[1] for box in boxes) + spacing * (len(lines) - 1) + padding * 2
+    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
-    if draw.textbbox((0, 0), text, font=font, stroke_width=stroke)[2] > width:
-        raise ValueError("subtitle exceeds subtitle_width; split the cue or reduce font_size")
-    x = (width - draw.textlength(text, font=font)) / 2
-    y = style.get("font_size", 58) // 2
     normal = ImageColor.getrgb(style.get("text_color", "white"))
     accent = ImageColor.getrgb(style.get("emphasis_color", "#ffff66"))
     outline = ImageColor.getrgb(style.get("stroke_color", "black"))
-    parts = [text] if not emphasis else [text[:text.index(emphasis)], emphasis, text[text.index(emphasis) + len(emphasis):]]
-    for index, part in enumerate(parts):
-        draw.text((x, y), part, font=font, fill=accent if emphasis and index == 1 else normal,
-                  stroke_width=stroke, stroke_fill=outline)
-        x += draw.textlength(part, font=font)
+    emphasis_start = text.index(emphasis) if emphasis else -1
+    emphasis_end = emphasis_start + len(emphasis) if emphasis else -1
+    top = padding
+    for (start, end), box in zip(lines, boxes):
+        x = (width - (box[2] - box[0])) / 2 - box[0]
+        baseline = top - box[1]
+        boundaries = sorted({start, end, max(start, min(end, emphasis_start)), max(start, min(end, emphasis_end))})
+        for begin, finish in zip(boundaries, boundaries[1:]):
+            color = accent if emphasis_start <= begin < emphasis_end else normal
+            run_x = x + draw.textlength(text[start:begin], font=font)
+            draw.text((run_x, baseline), text[begin:finish], font=font, fill=color,
+                      stroke_width=stroke, stroke_fill=outline, anchor="ls")
+        top += box[3] - box[1] + spacing
     return image
 
 
@@ -333,9 +408,8 @@ def _subtitle(cue: dict[str, Any], style: dict[str, Any], base: Path) -> Any:
     import numpy as np
     from moviepy import ImageClip
     image = _subtitle_image(cue, style, base)
-    width = image.width
     clip = ImageClip(np.asarray(image), transparent=True).with_duration(cue["end"] - cue["start"])
-    return clip.with_start(cue["start"]).with_position(((WIDTH - width) // 2, style.get("subtitle_y", 1380)))
+    return clip.with_start(cue["start"]).with_position(_subtitle_position(style, image.width, image.height))
 
 
 def _audio(spec: dict[str, Any], base: Path, remaining: float, resources: ExitStack) -> Any:
@@ -371,7 +445,8 @@ def render_timeline(data: dict[str, Any], timeline_path: Path, *, overwrite: boo
         raise FileExistsError(f"output exists: {output}; use --overwrite")
     output.parent.mkdir(parents=True, exist_ok=True)
     duration = data["video"]["duration"]
-    top_height = round(HEIGHT * TOP_RATIO)
+    top_ratio = data["video"]["top_ratio"]
+    top_height = round(HEIGHT * top_ratio)
     color = (0, 0, 0) if data["video"].get("background", "black") == "black" else (255, 255, 255)
     with ExitStack() as resources, tempfile.TemporaryDirectory(dir=output.parent, prefix=".video-render-") as directory:
         temporary = Path(directory) / "render.mp4"

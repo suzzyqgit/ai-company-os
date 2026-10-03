@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "AI Company OS Fixed Vertical Video Timeline",
+  "title": "AI Company OS Vertical Video Timeline",
   "type": "object",
   "required": ["version", "project", "output", "video", "segments"],
   "properties": {
@@ -19,7 +19,7 @@
         "width": {"const": 1080},
         "height": {"const": 1920},
         "fps": {"const": 30},
-        "top_ratio": {"const": 0.46},
+        "top_ratio": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
         "duration": {"type": "number", "exclusiveMinimum": 0},
         "max_static_top_seconds": {"type": "number", "exclusiveMinimum": 0},
         "background": {"enum": ["black", "white"]}
@@ -64,6 +64,11 @@
         "font": {"type": "string", "minLength": 1},
         "font_size": {"type": "integer", "minimum": 1},
         "subtitle_y": {"type": "integer", "minimum": 0, "maximum": 1919},
+        "subtitle_x": {"type": "integer", "minimum": 0, "maximum": 1080},
+        "subtitle_anchor": {"enum": ["top", "center"]},
+        "subtitle_margin_x": {"type": "integer", "minimum": 0, "maximum": 540},
+        "subtitle_margin_y": {"type": "integer", "minimum": 0, "maximum": 960},
+        "line_spacing": {"type": "integer", "minimum": 0, "maximum": 1920},
         "subtitle_width": {"type": "integer", "minimum": 1, "maximum": 1080},
         "text_color": {"type": "string"},
         "emphasis_color": {"type": "string"},
@@ -82,6 +87,8 @@
         "in": {"type": "number", "minimum": 0},
         "out": {"type": "number", "exclusiveMinimum": 0},
         "fit": {"enum": ["cover", "contain"]},
+        "focus_x": {"type": "number", "minimum": 0, "maximum": 1},
+        "focus_y": {"type": "number", "minimum": 0, "maximum": 1},
         "loop": {"type": "boolean"}
       },
       "additionalProperties": false

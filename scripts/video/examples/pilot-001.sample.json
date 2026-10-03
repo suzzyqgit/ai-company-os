@@ -6,7 +6,7 @@
     "width": 1080,
     "height": 1920,
     "fps": 30,
-    "top_ratio": 0.46,
+    "top_ratio": 0.50,
     "duration": 10,
     "max_static_top_seconds": 5,
     "background": "black"
@@ -15,18 +15,18 @@
     {
       "start": 0,
       "end": 4,
-      "top_media": {"path": "assets/top-001.mp4", "in": 0, "out": 4, "fit": "cover"},
-      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true}
+      "top_media": {"path": "assets/top-001.mp4", "in": 0, "out": 4, "fit": "cover", "focus_x": 0.5, "focus_y": 0.5},
+      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true, "focus_x": 0.5, "focus_y": 0.5}
     },
     {
       "start": 4,
       "end": 10,
-      "top_media": {"path": "assets/top-002.mp4", "in": 0, "out": 6, "fit": "cover"},
-      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true}
+      "top_media": {"path": "assets/top-002.mp4", "in": 0, "out": 6, "fit": "cover", "focus_x": 0.5, "focus_y": 0.5},
+      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true, "focus_x": 0.5, "focus_y": 0.5}
     }
   ],
   "subtitles": [
-    {"start": 0, "end": 2, "text": "Example subtitle", "emphasis": "Example"},
+    {"start": 0, "end": 2, "text": "Example\nsubtitle", "emphasis": "Example"},
     {"start": 4, "end": 6, "text": "Second example"}
   ],
   "voice": {"path": "assets/voice.wav", "start": 0, "gain_db": 0},
@@ -35,7 +35,12 @@
   "style": {
     "font": "assets/font.ttf",
     "font_size": 58,
-    "subtitle_y": 1380,
+    "subtitle_x": 540,
+    "subtitle_y": 960,
+    "subtitle_anchor": "center",
+    "subtitle_margin_x": 40,
+    "subtitle_margin_y": 40,
+    "line_spacing": 12,
     "subtitle_width": 980,
     "text_color": "white",
     "emphasis_color": "#ffff66",
