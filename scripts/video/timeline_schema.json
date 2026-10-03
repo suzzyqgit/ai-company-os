@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Company OS Vertical Video Timeline",
+  "type": "object",
+  "required": ["version", "project", "output", "video", "segments"],
+  "properties": {
+    "version": {"const": "1.0"},
+    "project": {"type": "string", "minLength": 1},
+    "output": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {"path": {"type": "string", "pattern": "\\.mp4$"}},
+      "additionalProperties": false
+    },
+    "video": {
+      "type": "object",
+      "required": ["width", "height", "fps", "top_ratio", "duration", "max_static_top_seconds"],
+      "properties": {
+        "width": {"const": 1080},
+        "height": {"const": 1920},
+        "fps": {"const": 30},
+        "top_ratio": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "duration": {"type": "number", "exclusiveMinimum": 0},
+        "max_static_top_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "background": {"enum": ["black", "white"]}
+      },
+      "additionalProperties": false
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "top_media", "presenter"],
+        "properties": {
+          "start": {"type": "number", "minimum": 0},
+          "end": {"type": "number", "exclusiveMinimum": 0},
+          "top_media": {"$ref": "#/$defs/clip"},
+          "presenter": {"$ref": "#/$defs/clip"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "subtitles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "text"],
+        "properties": {
+          "start": {"type": "number", "minimum": 0},
+          "end": {"type": "number", "exclusiveMinimum": 0},
+          "text": {"type": "string", "minLength": 1},
+          "emphasis": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "voice": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/audio"}]},
+    "bgm": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/audio"}]},
+    "sound_effects": {"type": "array", "items": {"$ref": "#/$defs/audio"}},
+    "style": {
+      "type": "object",
+      "properties": {
+        "font": {"type": "string", "minLength": 1},
+        "font_size": {"type": "integer", "minimum": 1},
+        "subtitle_y": {"type": "integer", "minimum": 0, "maximum": 1919},
+        "subtitle_x": {"type": "integer", "minimum": 0, "maximum": 1080},
+        "subtitle_anchor": {"enum": ["top", "center"]},
+        "subtitle_margin_x": {"type": "integer", "minimum": 0, "maximum": 540},
+        "subtitle_margin_y": {"type": "integer", "minimum": 0, "maximum": 960},
+        "line_spacing": {"type": "integer", "minimum": 0, "maximum": 1920},
+        "subtitle_width": {"type": "integer", "minimum": 1, "maximum": 1080},
+        "text_color": {"type": "string"},
+        "emphasis_color": {"type": "string"},
+        "stroke_color": {"type": "string"},
+        "stroke_width": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "clip": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "in": {"type": "number", "minimum": 0},
+        "out": {"type": "number", "exclusiveMinimum": 0},
+        "fit": {"enum": ["cover", "contain"]},
+        "focus_x": {"type": "number", "minimum": 0, "maximum": 1},
+        "focus_y": {"type": "number", "minimum": 0, "maximum": 1},
+        "loop": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "audio": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "start": {"type": "number", "minimum": 0},
+        "gain_db": {"type": "number"},
+        "loop": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
