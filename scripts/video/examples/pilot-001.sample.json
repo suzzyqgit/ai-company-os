@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "project": "pilot-001-structure-example",
+  "output": {"path": "outputs/pilot-001.mp4"},
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "top_ratio": 0.46,
+    "duration": 10,
+    "max_static_top_seconds": 5,
+    "background": "black"
+  },
+  "segments": [
+    {
+      "start": 0,
+      "end": 4,
+      "top_media": {"path": "assets/top-001.mp4", "in": 0, "out": 4, "fit": "cover"},
+      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true}
+    },
+    {
+      "start": 4,
+      "end": 10,
+      "top_media": {"path": "assets/top-002.mp4", "in": 0, "out": 6, "fit": "cover"},
+      "presenter": {"path": "assets/presenter.mp4", "in": 0, "fit": "cover", "loop": true}
+    }
+  ],
+  "subtitles": [
+    {"start": 0, "end": 2, "text": "Example subtitle", "emphasis": "Example"},
+    {"start": 4, "end": 6, "text": "Second example"}
+  ],
+  "voice": {"path": "assets/voice.wav", "start": 0, "gain_db": 0},
+  "bgm": {"path": "assets/bgm.wav", "start": 0, "gain_db": -18, "loop": true},
+  "sound_effects": [{"path": "assets/impact.wav", "start": 0, "gain_db": -9}],
+  "style": {
+    "font": "assets/font.ttf",
+    "font_size": 58,
+    "subtitle_y": 1380,
+    "subtitle_width": 980,
+    "text_color": "white",
+    "emphasis_color": "#ffff66",
+    "stroke_color": "black",
+    "stroke_width": 4
+  }
+}
