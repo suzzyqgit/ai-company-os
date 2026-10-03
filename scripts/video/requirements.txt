@@ -1,1 +1,5 @@
 moviepy==2.2.1
+scenedetect-headless==0.7.1
+opencv-python-headless==4.11.0.86
+numpy==2.4.6
+jsonschema==4.25.1

@@ -16,11 +16,11 @@ cross-version byte-identical MP4 output is not promised.
 ## Requirements
 
 - Python 3.11 or newer
-- MoviePy 2.2.1 (see requirements.txt)
+- MoviePy 2.2.1 and the scene-detection dependencies below (see requirements.txt)
 - Local ffmpeg and ffprobe executables on PATH; neither is vendored into this repository
 - A TrueType/OpenType font file when subtitles are used
 
-Install MoviePy in an isolated environment outside the repository, or use an
+Install the Python dependencies in an isolated environment outside the repository, or use an
 existing compatible environment. For example:
 
 ```bash
@@ -88,8 +88,9 @@ video:validate checks the placeholder sample's structure only. Actual render
 always checks asset existence, source duration and media streams, subtitle
 timing, geometry, fixed output spec, and excessive static upper media.
 Set the active Python interpreter to the MoviePy environment for render.
-The unit suite runs without MoviePy. Its render integration test is skipped
-unless MoviePy and both local FFmpeg tools are available. The integration
+Renderer structural unit tests run without MoviePy. video:test also includes
+scene tests, which require the pinned scene dependencies. Renderer integration
+tests are skipped unless MoviePy and both local FFmpeg tools are available. The integration
 test generates disposable fixtures and verifies codecs, duration, layout,
 presenter loop, silent AAC, audio mixing, and repeated-output SHA-256 equality.
 
@@ -104,3 +105,69 @@ messages for completed FFmpeg processes even when render tests pass.
 
 The engine does not generate AI narration, create subtitles, select emphasis,
 verify licenses, or make TikTok-specific creative changes.
+
+## Scene Detection (Phase 1)
+
+scene_detect.py is an independent upstream utility. It uses PySceneDetect's
+ContentDetector to find pixel-based fast cuts/hard scene changes and produces
+scene_schema.json-compatible JSON. It does not rank scenes, infer meaning,
+transcribe speech, generate subtitles, select B-roll, create a Timeline, or
+render Pilot #001. The existing renderer is unchanged.
+
+Pinned dependencies in requirements.txt:
+
+- scenedetect-headless 0.7.1: PySceneDetect's headless distribution
+- opencv-python-headless 4.11.0.86: required OpenCV video decoding/HSV pixel analysis
+- numpy 2.4.6: numerical array dependency used by OpenCV/PySceneDetect and MoviePy
+- jsonschema 4.25.1: local Draft 2020-12 JSON validation (no network schema retrieval)
+
+Only one OpenCV/PySceneDetect package variant should be installed per environment.
+No ML model, speech recognition, external API, or AI selection dependency is added.
+OpenCV 4.11.0.86 is pinned to the MP4-decoding build verified on the local Mac;
+do not upgrade it without rerunning the real-video integration tests.
+Detection uses the OpenCV wheel's decoder; probe/export use the local ffprobe/ffmpeg
+executables on PATH. No FFmpeg binary is committed or vendored by this feature.
+
+```bash
+python3 -B scripts/video/scene_detect.py --input /path/to/source.mp4 --output /path/to/scenes.json --threshold 27
+python3 -B scripts/video/scene_detect.py --input /path/to/source.mp4 --output /path/to/scenes.json --export-scenes /path/to/clips
+npm run video:scene:test
+npm run video:scene:validate
+```
+
+Use the isolated environment's Python (or activate it before npm commands).
+Threshold is configurable: 0 < threshold <= 255, default 27. This is a technical
+default, not a creative rule. Lower values are more sensitive. All frames are
+analyzed, with a one-frame minimum scene length; rapid changes are not suppressed
+by a hidden duration rule. Detection can mistake flashes/camera movement for cuts
+or miss subtle cuts. Fades/dissolves and semantic scene boundaries are not promised.
+
+Results record source path, video duration, width/height, fps, codec, detector
+version/settings, and one-based index/start/end/duration per scene. End times are
+exclusive and quantized to source frames, not the renderer's 30 fps. No detected
+cut means one scene covering the video. No creative selection is made.
+The example JSON is a synthetic three-color fixture result, not a real content claim.
+
+This first version accepts one zero-origin constant-frame-rate video stream.
+Audio-only, missing/invalid duration, invalid threshold, ambiguous multiple video
+streams, non-zero-origin streams, and detected VFR metadata are rejected. VFR is
+not supported; nominal frame-rate metadata alone cannot certify every timestamp.
+Truncated decode/coverage mismatch fails before JSON/export publication.
+
+--export-scenes is opt-in. FFmpeg writes scene-001.mp4, scene-002.mp4, etc., with
+frame-accurate H.264 (CRF 18) / optional AAC (192 kbps) re-encoding. Stream copy
+is intentionally not used: detected cuts need not coincide with keyframes.
+Exports retain source resolution/rate and do not replace the source. Detection
+without this flag produces only JSON. Source audio is not analyzed.
+
+Existing JSON/clip destinations, input aliases (including symlinks/hard links),
+and overwrites are rejected. Each completed output is atomically published with
+no replacement. Export encoding finishes in staging before any clip publication;
+multi-file publication is not a global transaction (a late filesystem failure can
+leave completed clips, but never overwrite an existing file). Use a fresh output
+directory when retrying. Input files are never written.
+
+Scene tests require the pinned dependencies plus local FFmpeg tools; missing
+dependencies fail rather than silently skipping integration coverage. Fixtures
+are generated in temporary directories. Tests cover boundaries, no-cut footage,
+metadata/schema, errors, source/alias protection, and optional real MP4 exports.
