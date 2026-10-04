@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TikTok Original Media Production Manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "project", "narration", "output", "target_duration", "canvas", "max_static_top_seconds", "upper_media", "presenter", "captions"],
+  "properties": {
+    "version": {"const": "0.1"},
+    "project": {"type": "string", "minLength": 1},
+    "narration": {"type": "string", "pattern": "\\.wav$"},
+    "output": {"type": "string", "pattern": "\\.mp4$"},
+    "target_duration": {"type": "number", "exclusiveMinimum": 0},
+    "max_static_top_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "canvas": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "fps", "video_codec", "audio_codec"],
+      "properties": {
+        "width": {"const": 1080}, "height": {"const": 1920}, "fps": {"const": 30},
+        "video_codec": {"const": "h264"}, "audio_codec": {"const": "aac"},
+        "top_ratio": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1, "default": 0.5}
+      }
+    },
+    "upper_media": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["path", "start", "end"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "start": {"type": "number", "minimum": 0}, "end": {"type": "number", "exclusiveMinimum": 0},
+          "in": {"type": "number", "minimum": 0}, "out": {"type": "number", "exclusiveMinimum": 0},
+          "fit": {"enum": ["cover", "contain"]},
+          "focus_x": {"$ref": "#/$defs/focus"}, "focus_y": {"$ref": "#/$defs/focus"}
+        }
+      }
+    },
+    "presenter": {
+      "type": "object", "additionalProperties": false, "required": ["assets"],
+      "properties": {
+        "order": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "assets": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["id", "path"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1},
+              "in": {"type": "number", "minimum": 0}, "out": {"type": "number", "exclusiveMinimum": 0},
+              "fit": {"const": "cover"},
+              "focus_x": {"$ref": "#/$defs/focus"}, "focus_y": {"$ref": "#/$defs/focus"}
+            }
+          }
+        }
+      }
+    },
+    "captions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["start", "end", "caption_text"],
+        "properties": {
+          "start": {"type": "number", "minimum": 0}, "end": {"type": "number", "exclusiveMinimum": 0},
+          "spoken_text": {"type": "string"}, "caption_text": {"type": "string", "minLength": 1},
+          "emphasis": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "caption_style": {"$ref": "#/$defs/style"}
+  },
+  "$defs": {
+    "focus": {"type": "number", "minimum": 0, "maximum": 1},
+    "style": {"$ref": "timeline_schema.json#/properties/style"}
+  }
+}
