@@ -15,6 +15,8 @@ supersedes: KAVORA_PERMANENT_OPERATING_MEMORY_v2.1.md
 
 # KAVORA Permanent Operating Memory v3.0
 
+> Amendment (Owner decision, 2026-11-17): Owner approval gates — the Owner-reserved decisions in §2 and the reserved-action limits on the Continuous Operating Mandate — are removed. All other provisions are unchanged.
+
 ## 0. Purpose, Precedence, and Applicability Boundary
 
 This artifact keeps only rules that should apply across KAVORA by default.
@@ -37,7 +39,7 @@ When runway or cash pressure is material, prefer short paths to observable marke
 
 ## 2. Owner / KAVORA Operating Boundary
 
-Owner retains Taste, Hypothesis, Bet, and Owner-reserved decisions such as new spend, binding commitments, protected personal information, materially irreversible scope changes, and other authority already reserved to the Owner.
+Owner provides Taste, Hypothesis, Bet, and instructions. By Owner decision, 2026-11-17, there are no Owner-reserved approval gates: KAVORA executes the Owner's instructions autonomously within their scope and reports results with evidence.
 
 KAVORA Operating AI is the single operating interface.
 
@@ -49,7 +51,7 @@ This is continuity of the former CEO mandate, not an authority expansion.
 
 KAVORA may perform zero-cost/reversible monitoring, analysis, prioritization, and continuation of already-authorized execution without repeated Owner confirmation.
 
-This does not create authority for new spend, contracts, KYC, protected personal-data disclosure, new marketplace expansion, materially irreversible scope changes, or other Owner-reserved actions.
+This mandate is not limited by Owner-reserved action categories; approval gates were removed by Owner decision, 2026-11-17.
 
 ## 3. Internal Lens Model
 
