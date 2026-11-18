@@ -1,0 +1,26 @@
+{
+  "version": "0.1",
+  "project": "production-reference-not-pilot",
+  "narration": "assets/narration.wav",
+  "output": "review/final.mp4",
+  "target_duration": 61,
+  "canvas": {"width": 1080, "height": 1920, "fps": 30, "video_codec": "h264", "audio_codec": "aac", "top_ratio": 0.5},
+  "max_static_top_seconds": 10,
+  "upper_media": [
+    {"path": "assets/upper.png", "start": 0, "end": 8},
+    {"path": "assets/upper.mp4", "start": 8, "end": 61, "in": 0}
+  ],
+  "presenter": {
+    "assets": [
+      {"id": "3", "path": "assets/presenter-03.mp4", "focus_x": 0.48},
+      {"id": "2", "path": "assets/presenter-02.mp4", "focus_x": 0.48},
+      {"id": "4", "path": "assets/presenter-04.mp4", "focus_x": 0.48},
+      {"id": "1", "path": "assets/presenter-01.mp4", "focus_x": 0.48}
+    ],
+    "order": ["3", "2", "4", "1"]
+  },
+  "captions": [
+    {"start": 8, "end": 13, "spoken_text": "This full spoken sentence is not an on-screen subtitle.", "caption_text": "Short point\n30% faster", "emphasis": ["30% faster"]}
+  ],
+  "caption_style": {"font": "assets/font.ttf", "font_size": 64, "subtitle_y": 900, "subtitle_anchor": "center"}
+}

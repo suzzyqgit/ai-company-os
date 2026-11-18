@@ -215,7 +215,8 @@ def validate_timeline(data: Any, *, base_dir: Path | None = None, require_assets
         elif len(content.split("\n")) > 2:
             errors.append(f"{prefix} exceeds two subtitle lines")
         emphasis = cue.get("emphasis")
-        if emphasis is not None and (not isinstance(emphasis, str) or not emphasis or not isinstance(content, str) or emphasis not in content):
+        words = emphasis if isinstance(emphasis, list) else ([] if emphasis is None else [emphasis])
+        if any(not isinstance(word, str) or not word or not isinstance(content, str) or word not in content for word in words):
             errors.append(f"{prefix}.emphasis must occur in text")
 
     style = data.get("style", {})
@@ -388,15 +389,15 @@ def _subtitle_image(cue: dict[str, Any], style: dict[str, Any], base: Path) -> A
     normal = ImageColor.getrgb(style.get("text_color", "white"))
     accent = ImageColor.getrgb(style.get("emphasis_color", "#ffff66"))
     outline = ImageColor.getrgb(style.get("stroke_color", "black"))
-    emphasis_start = text.index(emphasis) if emphasis else -1
-    emphasis_end = emphasis_start + len(emphasis) if emphasis else -1
+    words = emphasis if isinstance(emphasis, list) else ([emphasis] if emphasis else [])
+    ranges = [(text.index(word), text.index(word) + len(word)) for word in words]
     top = padding
     for (start, end), box in zip(lines, boxes):
         x = (width - (box[2] - box[0])) / 2 - box[0]
         baseline = top - box[1]
-        boundaries = sorted({start, end, max(start, min(end, emphasis_start)), max(start, min(end, emphasis_end))})
+        boundaries = sorted({start, end} | {max(start, min(end, edge)) for pair in ranges for edge in pair})
         for begin, finish in zip(boundaries, boundaries[1:]):
-            color = accent if emphasis_start <= begin < emphasis_end else normal
+            color = accent if any(a <= begin < b for a, b in ranges) else normal
             run_x = x + draw.textlength(text[start:begin], font=font)
             draw.text((run_x, baseline), text[begin:finish], font=font, fill=color,
                       stroke_width=stroke, stroke_fill=outline, anchor="ls")

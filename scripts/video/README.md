@@ -94,7 +94,71 @@ tests are skipped unless MoviePy and both local FFmpeg tools are available. The 
 test generates disposable fixtures and verifies codecs, duration, layout,
 presenter loop, silent AAC, audio mixing, and repeated-output SHA-256 equality.
 
-## Limitations
+## Production Orchestration v0.1
+
+`produce.py` compiles one authored production manifest into Timeline v1.0 and
+calls the existing renderer. It accepts an already-produced WAV, not a TTS
+provider or voice script. No topic selection, footage substitution, asset
+generation, speech recognition, posting, or external API is performed.
+
+```bash
+python3 -B scripts/video/produce.py --manifest /path/to/production.json --validate-only
+python3 -B scripts/video/produce.py --manifest /path/to/production.json
+python3 -B -m unittest discover -s scripts/video -p 'test_produce.py'
+```
+
+Use the Python environment containing requirements.txt. No additional dependency
+is needed. See production_schema.json and examples/production.sample.json; sample
+asset paths are placeholders, not a renderable Pilot. Relative paths resolve
+against the manifest, independent of the working directory. The schema reuses the
+local timeline style definition; the CLI resolves it locally without network access.
+
+- `narration`: existing WAV. ffprobe audio duration is authoritative.
+- `target_duration`: positive intended duration; mismatch produces a warning,
+  never padding or truncating the narration. Durations <=60s warn explicitly.
+- `canvas`: 1080x1920, 30 fps, h264/aac; `top_ratio` defaults to 0.5 but is configurable.
+- `upper_media`: authored image/video paths and start/end seconds, optionally
+  in/out, fit, focus_x/focus_y. Complete non-overlapping coverage is required.
+  Gaps report exact intervals. Source videos are never implicitly looped.
+- `presenter.assets`: unique IDs and source videos, optional in/out and focus.
+  `presenter.order` is a unique ID cycle, defaulting to asset-list order. The cycle
+  repeats until narration ends; the final clip is trimmed. One source warns when
+  consecutive reuse is unavoidable. Repeated IDs/duplicate resolved source paths
+  are rejected. No flip option exists; all presenter clips use cover and muted audio.
+- `captions`: timed `caption_text`, optional `spoken_text`, and an `emphasis` array.
+  Only caption_text reaches the renderer. spoken_text is informational, not a
+  transcript or input to automatic caption generation. Cues must be chronological
+  and non-overlapping. Two lines maximum, including font-measured wrapping.
+- `caption_style`: existing timeline style. Defaults: center (540,900), 64px,
+  width 980, margins 40, spacing 12, white/black 4px outline, accent #ffff66.
+  A local font is required when captions exist; glyph coverage remains the author's
+  responsibility. White text and black outline are enforced, safe-area overflow fails.
+- `max_static_top_seconds`: explicit authored constraint, preserved through
+  segment splitting. No automatic replacement of insufficient material occurs.
+
+Upper and presenter boundaries are combined deterministically. Source offsets
+advance across boundaries, preventing accidental presenter/video restarts. The
+Timeline still uses the existing format. Subtitle emphasis accepts the original
+single string as before, plus a backward-compatible array; each term highlights
+its first occurrence, and overlapping highlighted ranges are combined.
+
+A successful render publishes the requested MP4 plus `resolved_timeline.json`
+and `validation_report.json` beside it. Use a separate output directory per video.
+The report records warnings, output duration/resolution/fps/codecs, presenter
+sequence, upper assets, and caption count. All three destinations must be absent.
+There is deliberately no overwrite switch. Encoding and final ffprobe validation
+finish in staging before publication; no-replace hard links prevent concurrent
+overwrites. Multi-file publication is not a global transaction: filesystem/race
+failure can leave sidecars. Retry with a new output directory. Preflight failures
+are JSON on stdout with exit code 1 and create no production outputs.
+
+v0.1 does not add optional still pan/zoom, BGM/SE orchestration, or provenance/rights
+approval. Existing renderer BGM/SE support is unchanged. Rendering is reproducible
+for identical inputs/environment, not promised byte-identical across versions.
+Long timelines retain the existing MoviePy resource costs. Tests use synthetic
+local fixtures, not real narration or approved commercial media.
+
+## Renderer Limitations
 
 Subtitles that need more than two lines require shorter cues or an authored
 style adjustment. Timing is quantized to 30 fps and durations may differ by up to
