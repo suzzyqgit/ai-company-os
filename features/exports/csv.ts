@@ -1,11 +1,11 @@
 import {
   divideRate,
   resolveAnalyticsPeriod,
-} from "@/features/analytics/calculators";
+} from "../analytics/calculators.ts";
 import {
   formatTokyoDateInputValue,
   normalizeDateInputToTokyoDate,
-} from "@/features/metrics/calculators";
+} from "../metrics/calculators.ts";
 
 export const metricsCsvHeaders = [
   "date",
