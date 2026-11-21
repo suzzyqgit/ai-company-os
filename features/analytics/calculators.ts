@@ -1,7 +1,7 @@
 import {
   formatTokyoDateInputValue,
   normalizeDateInputToTokyoDate,
-} from "@/features/metrics/calculators";
+} from "../metrics/calculators.ts";
 
 export type AnalyticsRange =
   | "today"
